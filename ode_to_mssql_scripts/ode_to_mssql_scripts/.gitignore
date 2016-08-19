@@ -1,0 +1,8 @@
+*.dbmdl
+*.user
+bin/
+*.dacpac
+*.dll
+*.pdb
+obj/
+*.suo
