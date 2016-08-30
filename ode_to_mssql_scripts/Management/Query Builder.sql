@@ -52,12 +52,12 @@ IF (SELECT COUNT(*) FROM @Hub_List) > 0 OR (SELECT COUNT(*) FROM @Satellite_List
 BEGIN
 
 DECLARE @Hub_Link TABLE (hub_key int, hub_name varchar(128), link_key int, link_name varchar(128))
-DECLARE @Link_proc TABLE (link_key int, link_name varchar(128), link_database varchar(128), is_used bit)
+DECLARE @Link_proc TABLE (link_key int, link_name varchar(128), link_database varchar(128), link_schema varchar(128), is_used bit)
 
 --List of hubs for processing
-DECLARE @Hub_List_proc TABLE (hub_key int, hub_name varchar(128), hub_order int,  hub_database varchar(128), is_used bit)
+DECLARE @Hub_List_proc TABLE (hub_key int, hub_name varchar(128), hub_order int,  hub_database varchar(128), hub_schema varchar(28), is_used bit)
 INSERT @Hub_List_proc
-SELECT confH.hub_key, confH.hub_name, h.hub_order, confH.hub_database, 0
+SELECT confH.hub_key, confH.hub_name, h.hub_order, confH.hub_database, confH.hub_schema, 0
 FROM @Hub_sorted_List h
 JOIN [dbo].[dv_hub] confH
 ON h.hub_name = confH.hub_name
@@ -78,12 +78,15 @@ DECLARE @Final_SQL varchar(max)
 DECLARE @proc_link_key	int
 ,@proc_link_name		varchar(128)
 ,@proc_link_database	varchar(128)
+,@proc_link_schema		varchar(128)
 ,@proc_sat_name			varchar(128)
 ,@proc_sat_key			int
 ,@proc_sat_database		varchar(128)
+,@proc_sat_schema		varchar(128)
 ,@proc_hub_key			int
 ,@proc_hub_name			varchar(128)
 ,@proc_hub_database		varchar(128)
+,@proc_hub_schema		varchar(128)
 ,@proc_hub_column		varchar(128)
 ,@proc_sat_column		varchar(128)
 
@@ -144,7 +147,7 @@ BEGIN
 
 --Populate links list for processing
 	INSERT @Link_proc
-	SELECT link_key, link_name, link_database, 0 FROM [dbo].[dv_link] l
+	SELECT link_key, link_name, link_database, link_schema, 0 FROM [dbo].[dv_link] l
 	WHERE l.link_key IN (SELECT link_key FROM @Hub_Link)
 
 END
@@ -152,11 +155,11 @@ END
 ---------------------------------------------------------------------------------------------------
 
 --If there's no satellite provided for the hub, populate list with all hub's satellites
-DECLARE @Sat_Hub_list TABLE (satellite_key int, satellite_name varchar(128), satellite_database varchar(128), hub_key int, hub_name varchar(128))
+DECLARE @Sat_Hub_list TABLE (satellite_key int, satellite_name varchar(128), satellite_database varchar(128), satellite_schema varchar(128), hub_key int, hub_name varchar(128))
 
 --Populate the list of all sats for processing with input sats
 INSERT @Sat_Hub_list
-SELECT s.satellite_key, s.satellite_name, s.satellite_database, s.hub_key, h.hub_name
+SELECT s.satellite_key, s.satellite_name, s.satellite_database, s.satellite_schema, s.hub_key, h.hub_name
 FROM [dbo].[dv_satellite] s
 JOIN [dbo].[dv_hub] h
 ON s.hub_key = h.hub_key
@@ -167,7 +170,7 @@ AND s.satellite_name IN (SELECT satellite_name FROM @Satellite_List)
 
 --Populate the list of processing sats with all the sats for the input hubs if none of the satellites for hub was clearly defined
 INSERT @Sat_Hub_list
-SELECT s.satellite_key, s.satellite_name, s.satellite_database, s.hub_key, h.hub_name
+SELECT s.satellite_key, s.satellite_name, s.satellite_database, s.satellite_schema, s.hub_key, h.hub_name
 FROM [dbo].[dv_satellite] s
 JOIN [dbo].[dv_hub] h
 ON s.hub_key = h.hub_key
@@ -184,10 +187,11 @@ AND h.hub_key NOT IN (SELECT hub_key FROM @Sat_Hub_list)
 SELECT 
 @proc_hub_name = hub_name,
 @proc_hub_database = t1.hub_database,
+@proc_hub_schema = t1.hub_schema,
 @proc_hub_key = t1.hub_key
 FROM @Hub_List_proc t1 WHERE t1.hub_order = 1
 
-SET @SQL_CTE = @SQL_CTE + 'h' + @proc_hub_name + ' AS (SELECT *		FROM [' + @proc_hub_database + '].[' + @d_hub_schema + '].[' + @d_hub_prefix + @proc_hub_name + '])'
+SET @SQL_CTE = @SQL_CTE + 'h' + @proc_hub_name + ' AS (SELECT *		FROM [' + @proc_hub_database + '].[' + @proc_hub_schema + '].[' + @d_hub_prefix + @proc_hub_name + '])'
 SET @SQL_Join = @SQL_Join + 'h' + @proc_hub_name
 
 --Flag hub as it is being used in code
@@ -209,7 +213,7 @@ BEGIN
 		--1 one of the hubs is being used
 		--2 the link itself is not used
 		--3 there's a hub for this link which is not used yet
-		SELECT link_key, link_name, link_database FROM @Link_proc 
+		SELECT link_key, link_name, link_database, link_schema FROM @Link_proc 
 		WHERE is_used = 0
 		AND link_key IN (
 		SELECT link_key FROM @Hub_Link 
@@ -221,7 +225,7 @@ BEGIN
 
 		FETCH NEXT
 		FROM curLinks
-		INTO @proc_link_key, @proc_link_name, @proc_link_database
+		INTO @proc_link_key, @proc_link_name, @proc_link_database, @proc_link_schema
 
 		WHILE @@FETCH_STATUS = 0
 		BEGIN
@@ -232,6 +236,7 @@ BEGIN
 			SELECT @proc_sat_key = satellite_key
 			, @proc_sat_name = satellite_name
 			, @proc_sat_database = satellite_database
+			, @proc_sat_schema = satellite_schema
 			FROM [dbo].[dv_satellite]
 			WHERE is_retired = 0
 			AND link_hub_satellite_flag = 'L'
@@ -247,8 +252,8 @@ BEGIN
 			AND t2.link_key = @proc_link_key)
 
 			SET @SQL_CTE = @SQL_CTE + ' 
-, l' + @proc_link_name + ' AS (SELECT l.*	FROM [' + @proc_link_database + '].[' + @d_lnk_schema + '].[' + @d_lnk_prefix + @proc_link_name + '] l
-	JOIN [' + @proc_sat_database + '].[' + @d_sat_schema + '].[' + @d_sat_prefix + @proc_sat_name + '] s 
+, l' + @proc_link_name + ' AS (SELECT l.*	FROM [' + @proc_link_database + '].[' + @proc_link_schema + '].[' + @d_lnk_prefix + @proc_link_name + '] l
+	JOIN [' + @proc_sat_database + '].[' + @proc_sat_schema + '].[' + @d_sat_prefix + @proc_sat_name + '] s 
 	ON l.' + @d_lnk_prefix + @proc_link_name + @d_lnk_key + ' = s.' + @d_lnk_prefix + @proc_link_name + @d_lnk_key + ' WHERE s.' + @d_Current_Row + ' = 1 AND s.' + @d_Tombstone_Ind + ' = 0)'
 
 			SET @SQL_Join = @SQL_Join + '
@@ -264,7 +269,7 @@ LEFT JOIN l' + @proc_link_name + '		ON l' + @proc_link_name + '.' + @d_hub_prefi
 			--cursor hubs
 			DECLARE curHubs CURSOR
 			FOR 
-			SELECT t1.hub_key, t1.hub_name, t2.hub_database
+			SELECT t1.hub_key, t1.hub_name, t2.hub_database, t2.hub_schema
 			FROM @Hub_Link t1
 			JOIN @Hub_List_proc t2
 			ON t1.hub_key = t2.hub_key
@@ -275,13 +280,13 @@ LEFT JOIN l' + @proc_link_name + '		ON l' + @proc_link_name + '.' + @d_hub_prefi
 
 			FETCH NEXT
 			FROM curHubs
-			INTO @proc_hub_key, @proc_hub_name, @proc_hub_database
+			INTO @proc_hub_key, @proc_hub_name, @proc_hub_database, @proc_hub_schema
 
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 
 				SET @SQL_CTE = @SQL_CTE + '
-, h' + @proc_hub_name + ' AS (SELECT *	FROM [' + @proc_hub_database + '].[' + @d_hub_schema + '].[' + @d_hub_prefix + @proc_hub_name + '])'
+, h' + @proc_hub_name + ' AS (SELECT *	FROM [' + @proc_hub_database + '].[' + @proc_hub_schema + '].[' + @d_hub_prefix + @proc_hub_name + '])'
 				SET @SQL_Join = @SQL_Join + '
 LEFT JOIN h' + @proc_hub_name + '		ON h' + @proc_hub_name + '.' + @d_hub_prefix + @proc_hub_name + @d_hub_key + ' = l' + @proc_link_name + '.' + @d_hub_prefix + @proc_hub_name + @d_hub_key
 
@@ -291,7 +296,7 @@ LEFT JOIN h' + @proc_hub_name + '		ON h' + @proc_hub_name + '.' + @d_hub_prefix 
 
 				FETCH NEXT
 				FROM curHubs
-				INTO @proc_hub_key, @proc_hub_name, @proc_hub_database
+				INTO @proc_hub_key, @proc_hub_name, @proc_hub_database, @proc_hub_schema
 			END
 
 			CLOSE curHubs
@@ -300,7 +305,7 @@ LEFT JOIN h' + @proc_hub_name + '		ON h' + @proc_hub_name + '.' + @d_hub_prefix 
 --close links cursor
 		FETCH NEXT
 		FROM curLinks
-		INTO @proc_link_key, @proc_link_name, @proc_link_database
+		INTO @proc_link_key, @proc_link_name, @proc_link_database, @proc_link_schema
 	END
 
 CLOSE curLinks
@@ -319,7 +324,7 @@ SET @SQL_CTE = @SQL_CTE + '
 DECLARE curSats CURSOR
 FOR 
 
-SELECT satellite_key, satellite_name, satellite_database, hub_name
+SELECT satellite_key, satellite_name, satellite_database, hub_name, satellite_schema
 FROM @Sat_Hub_list
 WHERE hub_key IS NOT NULL
 
@@ -327,21 +332,21 @@ OPEN curSats
 
 FETCH NEXT
 FROM curSats
-INTO @proc_sat_key, @proc_sat_name, @proc_sat_database, @proc_hub_name
+INTO @proc_sat_key, @proc_sat_name, @proc_sat_database, @proc_hub_name, @proc_sat_schema
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
 
 
 	SET @SQL_CTE = @SQL_CTE + '
-, s' + @proc_sat_name + ' AS (SELECT *	FROM [' + @proc_sat_database + '].[' + @d_sat_schema + '].[' + @d_sat_prefix + @proc_sat_name + '] WHERE '+ @d_Current_Row + ' = 1 AND ' + @d_Tombstone_Ind + ' = 0)'
+, s' + @proc_sat_name + ' AS (SELECT *	FROM [' + @proc_sat_database + '].[' + @proc_sat_schema + '].[' + @d_sat_prefix + @proc_sat_name + '] WHERE '+ @d_Current_Row + ' = 1 AND ' + @d_Tombstone_Ind + ' = 0)'
 
 	SET @SQL_Join = @SQL_Join + '
 LEFT JOIN s' + @proc_sat_name + '		ON s' + @proc_sat_name + '.' + @d_hub_prefix + @proc_hub_name + @d_hub_key + ' = h' + @proc_hub_name + '.' + @d_hub_prefix + @proc_hub_name + @d_hub_key
 
 	FETCH NEXT
 	FROM curSats
-	INTO @proc_sat_key, @proc_sat_name, @proc_sat_database, @proc_hub_name
+	INTO @proc_sat_key, @proc_sat_name, @proc_sat_database, @proc_hub_name, @proc_sat_schema
 END
 
 CLOSE curSats
