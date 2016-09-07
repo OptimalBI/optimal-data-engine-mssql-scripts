@@ -29,7 +29,7 @@ INSERT @Satellite_List  VALUES ('Person_PersonPhone')
 /*------------------------------------------------------------------
 Query builder
 --------------------------------------------------------------------*/
-
+SET NOCOUNT ON;
 --Identify if all the satellites listed above have a hub. If not, add hub to the list of inputs.
 DECLARE @Hub_sorted_List TABLE (hub_name varchar(128), hub_order int IDENTITY(1,1))
 INSERT @Hub_sorted_List
