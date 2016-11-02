@@ -7,25 +7,25 @@ DECLARE
 @SatelliteOnly char(1)        = 'N'
 	-- when set to "N", the script will create a Hub and Satellite combination.
 	-- "Y" will cause the script to create a Satellite and hook it up to the specified Hub.
-,@sprintdate CHAR(8)        = '20160803'
+,@sprintdate CHAR(8)        = '20161026'
 	-- Start Date of the current Sprint in Integer yyyymmdd (this depends on having set up a Sprint Release with the key yyymmdd00
 	-- e.g. EXECUTE [dv_release].[dv_release_master_insert] 2016080100, 'Test Sprint release', 'US001', 'Jira'
 ,@ReleaseReference VARCHAR(50) = 'US999'
 	-- User Story and/or Task numbers for the Satellite which you are building.
 ,@ReleaseSource VARCHAR(50)       = 'Jira'
 	-- system the reference number refers to, Rally
-,@SourceTable VARCHAR(128)         = 'link_Sale'
+,@SourceTable VARCHAR(128)         = 'link_Sale001'
 	-- the name of the source table (this is a Stage table, which needs to exist. The script will use the meta data of the table to build the required Configuration in ODE)
 	-- The name must be unique across all Data Vaults.
 	-- To check, select * from ODE_Config.dbo.dv_source_table where table_name = 'YourSourceTableName' eg. 'Adventureworks__Sales__SalesOrderHeader'
-,@LinkName VARCHAR(128)            = 'Sale'
+,@LinkName VARCHAR(128)            = 'Sale001'
 	-- For completely Raw Links, you can leave this column as null. The Script will create a Link using the same name as the source table.
 	-- For Business Links, specify the name of the Link in the Ensemble.
 ,@SourceSystem VARCHAR(128)       = 'ODE'
 	-- the Source System Name as it appears in select source_system_name from ODE_config.dbo.dv_source_system.
 	-- Note that your Stage Table and usp need to exist in the database called: ODE_config.dv_source_system.timevault_name.
 --EXECUTE [dbo].[dv_source_system_insert] 'Adventureworks', 'ode_stage', 0, 0
-,@VaultName VARCHAR(128)             =  'ODE_Vault'
+,@VaultName VARCHAR(128)             =  'ode_vault_MAGODE_40'
 	--the name of the vault where the Hub and Satellite will be created.
 ,@ScheduleName VARCHAR(128)      =  'TestSchedule'
 	--the schedule the load is to run in. This schedule needs to exist prior to running this script.
@@ -35,7 +35,7 @@ DECLARE @Hub_Key_List TABLE (hub_name varchar(128), column_name varchar(128))
 INSERT @Hub_Key_List  VALUES ('Customer', 'CustomerID')
 INSERT @Hub_Key_List  VALUES ('Sale', 'SalesOrderNumber')
 INSERT @Hub_Key_List  VALUES ('SalesPerson', 'SalesPersonID')
-
+--select * from @Hub_Key_List
 -- Defaults
 DECLARE
 @is_columnstore BIT = 1
@@ -166,11 +166,13 @@ EXECUTE [dv_config].[dv_populate_satellite_columns] @vault_source_system = @Sour
 Hub Keys:
 ********************************************/
 -- Hook up each of the Hub Keys:
+select * from @Hub_Key_List
 while 1=1
 begin
 select @hub_name = hub_name, @column_name = column_name from @Hub_Key_List
 if @@rowcount = 0 break
 --
+
 delete from  @Hub_Key_List where @hub_name = hub_name and @column_name = column_name
 select @hub_key_column_key = hub_key_column_key
 ,@hub_key = h.hub_key
@@ -191,22 +193,37 @@ EXECUTE [dbo].[dv_hub_link_insert]
 @link_key = @link_key
 ,@hub_key = @hub_key
 ,@release_number = @release_number
+
 EXECUTE [dbo].[dv_hub_column_insert] @hub_key_column_key = @hub_key_column_key
 ,@column_key = @hub_source_column_key
 ,@release_number = @release_number
 end
 --
 -- Remove the Columns in the Exclude List from the Satellite:
+
+update [dbo].[dv_column]
+set [satellite_col_key] = NULL
+where [column_name] IN (
+SELECT *
+FROM @ExcludeColumns)
+and [column_key] in(select c.column_key from [dbo].[dv_column] c 
+                    inner join [dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
+					where sc.[satellite_key] = @satellite_key)
 DELETE
 FROM [dbo].[dv_satellite_column]
 WHERE [satellite_col_key] IN (
-SELECT [satellite_col_key]
-FROM dv_column c
-INNER JOIN [dbo].[dv_satellite_column] sc ON sc.column_key = c.column_key
-WHERE sc.[satellite_key] = @satellite_key
-AND c.[column_name] IN (
-SELECT *
-FROM @ExcludeColumns))
+	select sc.[satellite_col_key]
+	from [dbo].[dv_satellite_column] sc
+	left join [dbo].[dv_column] c
+	on sc.[satellite_col_key] = c.[satellite_col_key]
+	where c.[satellite_col_key] is null
+	and sc.[satellite_key] = @satellite_key)
+
+-- hook the Hub Key up to the Source Column which will populate it:
+--EXECUTE [dbo].[dv_hub_column_insert] @hub_key_column_key = @hub_key_column_key
+--,@column_key = @hub_source_column_key
+--,@release_number = @release_number
+--
 /********************************************
 Scheduler:
 ********************************************/
