@@ -83,8 +83,8 @@ Begin:
 
 -- Exclude the Hub Key from the Satellite if it is in Business Vault. Otherwise keep it.
 
-select 1 from [ode_config].[dbo].[dv_stage_database] sd
-inner join [ode_config].[dbo].[dv_stage_schema] ss on ss.[stage_database_key] = sd.[stage_database_key]
+select 1 from [dbo].[dv_stage_database] sd
+inner join [dv_stage_schema] ss on ss.[stage_database_key] = sd.[stage_database_key]
 where sd.[stage_database_name] = @StageDatabase
 and ss.[stage_schema_name] = @StageSchema
 if @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
@@ -146,7 +146,7 @@ Release:
 ********************************************/
 --'Find the Next Release for the Sprint'
 SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
-FROM [ode_config].[dv_release].[dv_release_master]
+FROM [dv_release].[dv_release_master]
 WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @sprintdate
 ORDER BY 1 DESC
 IF @@rowcount = 0
@@ -156,7 +156,7 @@ SET @release_number = cast(@sprintdate + right('00' + cast(@seqint + 1 AS VARCHA
 SELECT @release_number
 SET @Description = 'Load Stage Table: ' + quotename(@StageTable) + ' into ' + quotename(@VaultName)
 -- Create the Release:
-EXECUTE  @release_key = [ode_config].[dv_release].[dv_release_master_insert]  @release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
+EXECUTE  @release_key = [dv_release].[dv_release_master_insert]  @release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
 																,@release_description	= @Description		-- what the release is for
 																,@reference_number		= @ReleaseReference
 																,@reference_source		= @ReleaseSource
@@ -167,8 +167,8 @@ Hub:
 -- Configure the Hub:
 if @SatelliteOnly = 'N'
 begin
-SELECT @abbn = [ode_config].[dbo].[fn_get_next_abbreviation]()
-EXECUTE @hub_key = [ode_config].[dbo].[dv_hub_insert] 
+SELECT @abbn = [dbo].[fn_get_next_abbreviation]()
+EXECUTE @hub_key = [dbo].[dv_hub_insert] 
 				   @hub_name = @HubName
 				  ,@hub_abbreviation = @abbn
 				  ,@hub_schema = 'hub'
@@ -181,7 +181,7 @@ else
 begin
 select @hub_key			= [hub_key]
       ,@hub_database	= [hub_database]
-from [ode_config].[dbo].[dv_hub] 
+from [dbo].[dv_hub] 
 where [hub_name] = @HubName
 if @hub_database <> @VaultName
 begin
@@ -193,8 +193,8 @@ end
 Satellite:
 ********************************************/
 -- Configure the Satellite:
-SELECT @abbn = [ode_config].[dbo].[fn_get_next_abbreviation]()
-EXECUTE @satellite_key = [ode_config].[dbo].[dv_satellite_insert] 
+SELECT @abbn = [dbo].[fn_get_next_abbreviation]()
+EXECUTE @satellite_key = [dbo].[dv_satellite_insert] 
 						 @hub_key					= @hub_key
 						,@link_key					= 0 --Dont fill in for a Hub
 						,@link_hub_satellite_flag	= 'H'
@@ -212,7 +212,7 @@ EXECUTE @satellite_key = [ode_config].[dbo].[dv_satellite_insert]
 Stage Table:
 ********************************************/
 SELECT 'Build the Stage Table with its columns: '
-EXECUTE [ode_config].[dv_config].[dv_populate_source_table_columns] 
+EXECUTE [dv_config].[dv_populate_source_table_columns] 
    @vault_stage_database		= @StageDatabase
   ,@vault_stage_schema			= @StageSchema
   ,@vault_stage_table			= @StageTable
@@ -222,10 +222,10 @@ EXECUTE [ode_config].[dv_config].[dv_populate_source_table_columns]
   ,@vault_source_system_name	= @SourceSystemName
   ,@vault_release_number		= @release_number
   ,@vault_rerun_column_insert	= 0
-select @source_table_key = source_table_key from [ode_config].[dbo].[dv_source_table] where [source_unique_name] = @StageTable
+select @source_table_key = source_table_key from [dbo].[dv_source_table] where [source_unique_name] = @StageTable
 -- Add a Current Source Version with a "Version" of 1 
 
-EXECUTE @source_version_key = [ode_config].[dbo].[dv_source_version_insert] 
+EXECUTE @source_version_key = [dbo].[dv_source_version_insert] 
    @source_table_key		= @source_table_key
   ,@source_version			= 1
   ,@source_procedure_name   = @source_procedure_name
@@ -241,7 +241,7 @@ IF @StageSourceType = 'LeftRightComparison'
 			********************************************/
 			BEGIN
 			select 'hook up the left right columns for matching'
-			EXECUTE @match_key = [ode_config].[dbo].[dv_object_match_insert] 
+			EXECUTE @match_key = [dbo].[dv_object_match_insert] 
 			   @source_version_key = @source_version_key
 			  ,@temporal_pit_left = @MatchingTemporalPitLeft
 			  ,@temporal_pit_right = @MatchingTemporalPitRight
@@ -273,8 +273,8 @@ IF @StageSourceType = 'LeftRightComparison'
 			--	   ,@MatchingLeftObjectName
 			--	   ,@left_column_name
 				select @left_hub_key_column_key = hub_key_column_key
-				from [ode_config].[dbo].[dv_hub] h
-				inner join [ode_config].[dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
+				from [dbo].[dv_hub] h
+				inner join [dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
 				where h.[hub_database]			= @MatchingLeftObjectDatabase
 				  and h.[hub_schema]			= @MatchingLeftObjectSchema
 				  and h.[hub_name]				= @MatchingLeftObjectName
@@ -284,8 +284,8 @@ IF @StageSourceType = 'LeftRightComparison'
 			else IF @MatchingLeftObjectType = 'lnk'
 			begin
 				select @left_link_key_column_key = link_key_column_key
-				from [ode_config].[dbo].[dv_link] l
-				inner join [ode_config].[dbo].[dv_link_key_column] lkc on lkc.link_key = l.link_key
+				from [dbo].[dv_link] l
+				inner join [dbo].[dv_link_key_column] lkc on lkc.link_key = l.link_key
 				where l.[link_database]			 = @MatchingLeftObjectDatabase
 				  and l.[link_schema]			 = @MatchingLeftObjectSchema
 				  and l.[link_name]				 = @MatchingLeftObjectName
@@ -296,8 +296,8 @@ IF @StageSourceType = 'LeftRightComparison'
 			begin 
 			
 				select @left_satellite_col_key = satellite_col_key
-				from [ode_config].[dbo].[dv_satellite] s
-				inner join [ode_config].[dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
+				from [dbo].[dv_satellite] s
+				inner join [dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
 				where s.[satellite_database]		 = @MatchingLeftObjectDatabase
 				  and s.[satellite_schema]			 = @MatchingLeftObjectSchema
 				  and s.[satellite_name]			 = @MatchingLeftObjectName
@@ -312,10 +312,10 @@ IF @StageSourceType = 'LeftRightComparison'
 			--	  , @MatchingLeftObjectName
 			--	  , @left_column_name
 				select @left_column_key = column_key
-				from [ode_config].[dbo].[dv_source_table] st
-				inner join [ode_config].[dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
-				inner join [ode_config].[dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
-				inner join [ode_config].[dbo].[dv_column] c on c.table_key = st.source_table_key
+				from [dbo].[dv_source_table] st
+				inner join [dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
+				inner join [dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
+				inner join [dbo].[dv_column] c on c.table_key = st.source_table_key
 				where sd.[stage_database_name]		 = @MatchingLeftObjectDatabase
 				  and ss.[stage_schema_name]		 = @MatchingLeftObjectSchema
 				  and st.[stage_table_name]			 = @MatchingLeftObjectName
@@ -328,8 +328,8 @@ IF @StageSourceType = 'LeftRightComparison'
 			IF @MatchingrightObjectType = 'hub'
 			begin
 				select @right_hub_key_column_key = hub_key_column_key
-				from [ode_config].[dbo].[dv_hub] h
-				inner join [ode_config].[dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
+				from [dbo].[dv_hub] h
+				inner join [dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
 				where h.[hub_database]			= @MatchingrightObjectDatabase
 				  and h.[hub_schema]			= @MatchingrightObjectSchema
 				  and h.[hub_name]				= @MatchingrightObjectName
@@ -339,8 +339,8 @@ IF @StageSourceType = 'LeftRightComparison'
 			else IF @MatchingrightObjectType = 'lnk'
 			begin
 				select @right_link_key_column_key = link_key_column_key
-				from [ode_config].[dbo].[dv_link] l
-				inner join [ode_config].[dbo].[dv_link_key_column] lkc on lkc.link_key = l.link_key
+				from [dbo].[dv_link] l
+				inner join [dbo].[dv_link_key_column] lkc on lkc.link_key = l.link_key
 				where l.[link_database]			 = @MatchingrightObjectDatabase
 				  and l.[link_schema]			 = @MatchingrightObjectSchema
 				  and l.[link_name]				 = @MatchingrightObjectName
@@ -350,8 +350,8 @@ IF @StageSourceType = 'LeftRightComparison'
 			else IF @MatchingrightObjectType = 'sat'
 			begin
 				select @right_satellite_col_key = satellite_col_key
-				from [ode_config].[dbo].[dv_satellite] s
-				inner join [ode_config].[dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
+				from [dbo].[dv_satellite] s
+				inner join [dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
 				where s.[satellite_database]		 = @MatchingrightObjectDatabase
 				  and s.[satellite_schema]			 = @MatchingrightObjectSchema
 				  and s.[satellite_name]			 = @MatchingrightObjectName
@@ -361,10 +361,10 @@ IF @StageSourceType = 'LeftRightComparison'
 			else IF @MatchingrightObjectType = 'stg'
 			begin
 				select @right_column_key = column_key
-				from [ode_config].[dbo].[dv_source_table] st
-				inner join [ode_config].[dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
-				inner join [ode_config].[dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
-				inner join [ode_config].[dbo].[dv_column] c on c.table_key = st.source_table_key
+				from [dbo].[dv_source_table] st
+				inner join [dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
+				inner join [dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
+				inner join [dbo].[dv_column] c on c.table_key = st.source_table_key
 				where sd.[stage_database_name]		 = @MatchingrightObjectDatabase
 				  and ss.[stage_schema_name]		 = @MatchingrightObjectSchema
 				  and st.[stage_table_name]			 = @MatchingrightObjectName
@@ -373,7 +373,7 @@ IF @StageSourceType = 'LeftRightComparison'
 			end
 			else raiserror( 'right Matching %s is not a valid Matching Object', 16, 1, @MatchingrightObjectType)
 
-			EXECUTE [ode_config].[dbo].[dv_column_match_insert] 
+			EXECUTE [dbo].[dv_column_match_insert] 
 					 @match_key					= @match_key
 					,@left_hub_key_column_key	= @left_hub_key_column_key
 					,@left_link_key_column_key	= @left_link_key_column_key
@@ -395,7 +395,7 @@ IF @StageSourceType = 'LeftRightComparison'
 			********************************************/
 --
 SELECT 'Hook the Source Columns up to the Satellite:'
-EXECUTE [ode_config].[dv_config].[dv_populate_satellite_columns] 
+EXECUTE [dv_config].[dv_populate_satellite_columns] 
    @vault_source_unique_name	= @StageTable
   ,@vault_satellite_name		= @SatelliteName
   ,@vault_release_number		= @release_number
@@ -415,7 +415,7 @@ FETCH NEXT FROM curHubKey INTO @HubKeyName, @OrdinalPosition
 
 WHILE @@FETCH_STATUS = 0   
 BEGIN 
-select 'hello;' ,* from [ode_config].[dbo].[dv_column] where table_key = @source_table_key
+select 'hello;' ,* from [dbo].[dv_column] where table_key = @source_table_key
 select @HubKeyName, @OrdinalPosition, @source_table_key 
 -- Create the Hub Key based on the Source Column:
 SELECT @hub_key_column_type			= 'varchar'	--[column_type]
@@ -424,11 +424,11 @@ SELECT @hub_key_column_type			= 'varchar'	--[column_type]
 	  ,@hub_key_column_scale		= 0			--[column_scale]
 	  ,@hub_key_Collation_Name	    = null		--[Collation_Name]
       ,@hub_source_column_key		= [column_key]
-FROM [ode_config].[dbo].[dv_column] c
+FROM [dbo].[dv_column] c
 WHERE [column_key] IN (
 SELECT c.[column_key]
-FROM [ode_config].[dbo].[dv_source_table] st 
-inner join [ode_config].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+FROM [dbo].[dv_source_table] st 
+inner join [dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
 WHERE 1=1
 and st.source_table_key = @source_table_key
 and c.column_name = @HubKeyName
@@ -436,11 +436,11 @@ and c.column_name = @HubKeyName
 
 
 SELECT *
-FROM [ode_config].[dbo].[dv_column] c
+FROM [dbo].[dv_column] c
 WHERE [column_key] IN (
 SELECT c.[column_key]
-FROM [ode_config].[dbo].[dv_source_table] st 
-inner join [ode_config].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+FROM [dbo].[dv_source_table] st 
+inner join [dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
 WHERE 1=1
 and st.source_table_key = @source_table_key
 --and c.column_name = @HubKeyName
@@ -463,7 +463,7 @@ begin
 		   ,@OrdinalPosition
 		   ,@release_number
 	
-	EXECUTE @hub_key_column_key = [ode_config].[dbo].[dv_hub_key_insert] 
+	EXECUTE @hub_key_column_key = [dbo].[dv_hub_key_insert] 
 								 @hub_key					= @hub_key
 								,@hub_key_column_name		= @HubKeyName
 								,@hub_key_column_type		= @hub_key_column_type
@@ -477,7 +477,7 @@ end
 else
 begin
 	select @hub_key_column_key = [hub_key_column_key]
-	from [ode_config].[dbo].[dv_hub_key_column]
+	from [dbo].[dv_hub_key_column]
 	where [hub_key] = @hub_key
 	and [hub_key_column_name] = @HubKeyName
 	--if @@rowcount > 1
@@ -490,7 +490,7 @@ select  hub_key_column_key		 = @hub_key_column_key
 	   ,hub_source_column_key	 = @hub_source_column_key
 	   ,HubKeyName				 = @HubKeyName
 
-EXECUTE [ode_config].[dbo].[dv_hub_column_insert] 
+EXECUTE [dbo].[dv_hub_column_insert] 
 	 @hub_key_column_key	= @hub_key_column_key
 	,@link_key_column_key	= NULL
 	,@column_key			= @hub_source_column_key
@@ -506,22 +506,22 @@ DEALLOCATE curHubKey
 Tidy Up:
 ********************************************/
 -- Remove the Columns in the Exclude List from the Satellite:
-update [ode_config].[dbo].[dv_column]
+update [dbo].[dv_column]
 set [satellite_col_key] = NULL
 where [column_name] IN (
 SELECT *
 FROM @ExcludeColumns)
-and [column_key] in(select c.column_key from [ode_config].[dbo].[dv_column] c 
-                    inner join [ode_config].[dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
+and [column_key] in(select c.column_key from [dbo].[dv_column] c 
+                    inner join [dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
 					where sc.[satellite_key] = @satellite_key)
 
 -- If you don't want Keys in the satellites:
 	DELETE
-	FROM [ode_config].[dbo].[dv_satellite_column]
+	FROM [dbo].[dv_satellite_column]
 	WHERE [satellite_col_key] IN (
 		select sc.[satellite_col_key]
-		from [ode_config].[dbo].[dv_satellite_column] sc
-		left join [ode_config].[dbo].[dv_column] c	on sc.[satellite_col_key] = c.[satellite_col_key]
+		from [dbo].[dv_satellite_column] sc
+		left join [dbo].[dv_column] c	on sc.[satellite_col_key] = c.[satellite_col_key]
 		where c.[satellite_col_key] is null
 		  and sc.[satellite_key] = @satellite_key
 		  )
@@ -529,7 +529,7 @@ and [column_key] in(select c.column_key from [ode_config].[dbo].[dv_column] c
 Scheduler:
 ********************************************/
 -- Add the Source the the required Schedule:
-EXECUTE [ode_config].[dv_scheduler].[dv_schedule_source_table_insert] 
+EXECUTE [dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @ScheduleName
   ,@source_unique_name			= @StageTable
   ,@source_table_load_type		= 'Full'
@@ -549,11 +549,11 @@ SELECT 'EXECUTE [dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
 ,@vault_source_load_type = ''full'''
 UNION
-SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([ode_config].[dbo].[fn_get_object_name] (hub_name, 'hub'))
-from [ode_config].[dbo].[dv_hub] where hub_name = @HubName
+SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([dbo].[fn_get_object_name] (hub_name, 'hub'))
+from [dbo].[dv_hub] where hub_name = @HubName
 UNION
-SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([ode_config].[dbo].[fn_get_object_name] (satellite_name, 'sat'))
-from [ode_config].[dbo].[dv_satellite] where satellite_name =  @SatelliteName
+SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([dbo].[fn_get_object_name] (satellite_name, 'sat'))
+from [dbo].[dv_satellite] where satellite_name =  @SatelliteName
 --
 PRINT 'succeeded';
 -- Commit if successful:

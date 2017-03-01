@@ -1,4 +1,4 @@
-﻿# Optimal Data Engine (ODE) #
+﻿# Optimal Data Engine (ODE) Scripts#
 Copyright 2015 OptimalBI - Licensed under the GNU GENERAL PUBLIC LICENSE Version 3.0 (GPL-3.0)
 
 ## What Optimal Data Engine Scripts does: ##
@@ -25,13 +25,25 @@ The Project contains a number of discrete scripts, which you can copy off the Gi
 ### Pre-requisites ###
 
 * Download a copy of the zip and extract to a temporary folder
+
+### Scripted Install ###
+
+* Open SQL Server Management studio and load *ode_to_mssql_scripts_Create.sql* from the extracted zip file. You will find it in the *ReleaseScript* folder.
+* Within SQL Server Management Studio > Click Query Menu > SQLCMD Mode 
+* Within the script optionally change the ConfigDatabase to your ODE_Config database name, DatabaseName and DefaultFilePrefix to the preferred ODE scripts database name; default is *ode_to_mssql_scripts*. *ODE_Admin* is recommended. 
+* Click Execute from the toolbar. This should run successfully with a result of 'Update complete' on the Message panel
+
+### Ad Hoc Usage ###
+
+Scripts could be used on Ad Hoc basis without new database installation. Refer to folders *Configuration* and *Management* for Ad Hoc scripts.
  
 ## Current functionality: ##
 Details of the current ODE functionality can be found here http://www.ode.ninja/category/features/
-These scripts are linked on a number of pages in http://www.ode.ninja/, where there usage is dicussed in more detail.
+These scripts are linked on a number of pages in http://www.ode.ninja/ , where there usage is dicussed in more detail.
 
 ## Notes ##
-* Untested on SQL Server editions prior to 2014
+* Untested on SQL Server editions prior to 2014. Installation script is compiled for SQL Server 2016.
+* Stored procedures have hidden settings for columnstore indexes and table compression flags. You may need to edit stored procedures in case these features are not available in your instance of SQL Server.
 * This product is still in Beta and should not be deployed to a production environment without thorough testing by you to ensure no adverse effects on your environment
 
 ## Feedback, suggestions, bugs, contributions: ##
@@ -42,6 +54,9 @@ Visit http://www.ode.ninja/ - this is where we keep our guides and share our kno
 
 ## Change log: ##
 ```
+Build 004.001.001 on 20170301
+		* Scripts are upgraded to run on ODE version 4.1
+		* Some scripts are transformed to stored procedures to be stored in ODE admin database (not in core config)
 20160819 
         * Initial Build.
 ```
