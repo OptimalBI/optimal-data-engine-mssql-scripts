@@ -81,6 +81,7 @@
     <Build Include="dbo\User Defined Types\dv_link_detail_list.sql" />
     <Build Include="dbo\User Defined Types\dv_column_matching_list.sql" />
     <Build Include="dbo\User Defined Types\dv_column_list.sql" />
+    <Build Include="dbo\Stored Procedures\ODE_version_source_rule.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="ConfigDatabase">
