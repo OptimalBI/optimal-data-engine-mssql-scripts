@@ -72,7 +72,7 @@ BEGIN
 
  WHILE @@FETCH_STATUS = 0
  BEGIN
- PRINT REPLACE(@output, 'dv_hub_key_column_delete', 'dv_hub_key_delete')
+ PRINT REPLACE(REPLACE(@output, 'dv_hub_key_column_delete', 'dv_hub_key_delete'), 'dv_link_key_column_delete', 'dv_link_key_delete')
 
  FETCH NEXT
  FROM subcur
