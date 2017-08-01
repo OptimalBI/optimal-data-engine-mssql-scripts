@@ -66,6 +66,9 @@
     <Folder Include="dbo\Stored Procedures\" />
     <Folder Include="dbo\User Defined Types\" />
     <Folder Include="ReleaseScript" />
+    <Folder Include="Admin\" />
+    <Folder Include="Admin\Stored Procedures\" />
+    <Folder Include="Security\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Configuration\Create_Hub_and_Satellite.sql" />
@@ -82,6 +85,10 @@
     <Build Include="dbo\User Defined Types\dv_column_matching_list.sql" />
     <Build Include="dbo\User Defined Types\dv_column_list.sql" />
     <Build Include="dbo\Stored Procedures\ODE_version_source_rule.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Create_Data_Access_Functions_PIT_Single.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Create_Data_Access_Functions_All_Single.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Build_Vault_Object_Create_Statements.sql" />
+    <Build Include="Security\Admin.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="ConfigDatabase">
