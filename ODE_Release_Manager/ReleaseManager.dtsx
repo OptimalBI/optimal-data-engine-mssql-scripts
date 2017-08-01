@@ -1,0 +1,1381 @@
+<?xml version="1.0"?>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationDate="11/11/2016 1:08:34 PM"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorComputerName="GIRAFFE_010"
+  DTS:CreatorName="Giraffe_010\brianb"
+  DTS:DTSID="{6BD32D16-968B-4005-82FA-1E30EE232E19}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LastModifiedProductVersion="14.0.0500.272"
+  DTS:LocaleID="5129"
+  DTS:ObjectName="ReleaseManager"
+  DTS:PackageType="5"
+  DTS:VersionBuild="34"
+  DTS:VersionGUID="{10CFC201-FE81-439D-9F7F-518895704980}">
+  <DTS:Property
+    DTS:Name="PackageFormatVersion">8</DTS:Property>
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{91D0E317-54B3-4222-8BA9-105E6207EC6A}"
+      DTS:EvaluateAsExpression="True"
+      DTS:Expression="REPLACE( @[User::strSelectTheRelease_template] , &quot;########&quot;, (DT_WSTR, 10) @[$Project::Release_Number]  )"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="strSelectTheRelease">
+      <DTS:VariableValue
+        DTS:DataType="8">SELECT [release_build_key],[release_number],[release_statement_sequence],[release_statement_type],[release_statement],[affected_row_count] FROM [dv_release].[dv_release_build] WHERE [release_number] = 20161113</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{88274B9D-0414-4BCD-A5B2-1127A139889D}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="strSelectTheRelease_template">
+      <DTS:VariableValue
+        DTS:DataType="8">SELECT [release_build_key],[release_number],[release_statement_sequence],[release_statement_type],[release_statement],[affected_row_count] FROM [dv_release].[dv_release_build] WHERE [release_number] = ########</DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\SC_Apply_The_Release"
+      DTS:CreationName="STOCK:SEQUENCE"
+      DTS:Description="Sequence Container"
+      DTS:DTSID="{895AC928-35B4-4164-BEC0-96F56997BE4D}"
+      DTS:ExecutableType="STOCK:SEQUENCE"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="SC_Apply_The_Release">
+      <DTS:Variables />
+      <DTS:Executables>
+        <DTS:Executable
+          DTS:refId="Package\SC_Apply_The_Release\SQL_Apply_the_Release"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{E7DC2428-F882-47F0-B263-5B52819828F8}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Apply_the_Release"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="3">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{119B01DD-7234-4C23-86C8-FE6404070425}"
+              SQLTask:SqlStatementSource="EXECUTE [dv_release].[dv_apply_release_config] &#xA;@vault_release_number  = ?" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="0"
+                SQLTask:DtsVariableName="$Project::Release_Number"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="3"
+                SQLTask:ParameterSize="-1" />
+            </SQLTask:SqlTaskData>
+          </DTS:ObjectData>
+        </DTS:Executable>
+        <DTS:Executable
+          DTS:refId="Package\SC_Apply_The_Release\SQL_Full_Remove_All_Config"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{509B3C20-9262-4B6A-A99D-5C91CAEE0513}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Full_Remove_All_Config"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="2">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{119B01DD-7234-4C23-86C8-FE6404070425}"
+              SQLTask:SqlStatementSource="EXECUTE [dv_config].[dv_global_config_update]&#xA; @vault_config_update_type = 'Empty_All_Config'&#xA;,@vault_release_number     = ?" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="0"
+                SQLTask:DtsVariableName="$Project::Release_Number"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="3"
+                SQLTask:ParameterSize="-1" />
+            </SQLTask:SqlTaskData>
+          </DTS:ObjectData>
+        </DTS:Executable>
+        <DTS:Executable
+          DTS:refId="Package\SC_Apply_The_Release\SQL_Start_the_Build"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{E99518CF-9EF5-4280-8077-1D260943CC8F}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Start_the_Build"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="2">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{119B01DD-7234-4C23-86C8-FE6404070425}"
+              SQLTask:SqlStatementSource="PRINT 'Start'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+          </DTS:ObjectData>
+        </DTS:Executable>
+      </DTS:Executables>
+      <DTS:PrecedenceConstraints>
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Apply_The_Release.PrecedenceConstraints[Constraint]"
+          DTS:CreationName=""
+          DTS:DTSID="{55E22EF8-D527-47B9-9318-5A1C129263EA}"
+          DTS:EvalOp="3"
+          DTS:Expression="@[$Project::FullRelease] == False"
+          DTS:From="Package\SC_Apply_The_Release\SQL_Start_the_Build"
+          DTS:ObjectName="Constraint"
+          DTS:To="Package\SC_Apply_The_Release\SQL_Apply_the_Release" />
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Apply_The_Release.PrecedenceConstraints[Constraint 1]"
+          DTS:CreationName=""
+          DTS:DTSID="{C88A1716-9A54-4EBF-B018-8C866A0AD15C}"
+          DTS:EvalOp="3"
+          DTS:Expression="@[$Project::FullRelease] == True"
+          DTS:From="Package\SC_Apply_The_Release\SQL_Start_the_Build"
+          DTS:ObjectName="Constraint 1"
+          DTS:To="Package\SC_Apply_The_Release\SQL_Full_Remove_All_Config" />
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Apply_The_Release.PrecedenceConstraints[Constraint 2]"
+          DTS:CreationName=""
+          DTS:DTSID="{DA7FE6AE-BAAB-4ED0-AB81-B7AED493F28A}"
+          DTS:From="Package\SC_Apply_The_Release\SQL_Full_Remove_All_Config"
+          DTS:ObjectName="Constraint 2"
+          DTS:To="Package\SC_Apply_The_Release\SQL_Apply_the_Release" />
+      </DTS:PrecedenceConstraints>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\SC_Build_the_Release"
+      DTS:CreationName="STOCK:SEQUENCE"
+      DTS:Description="Sequence Container"
+      DTS:DTSID="{4C5752DD-316C-4648-BC0D-A5B08FB8C0DD}"
+      DTS:ExecutableType="STOCK:SEQUENCE"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="SC_Build_the_Release">
+      <DTS:Variables />
+      <DTS:Executables>
+        <DTS:Executable
+          DTS:refId="Package\SC_Build_the_Release\SQL_Build_the_Release"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{9B502003-54E3-46A6-8CB5-AF4C79397077}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Build_the_Release"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="1">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{696663A8-28BD-4D77-90CB-DECB5C3ACD8B}"
+              SQLTask:SqlStatementSource="EXECUTE [dv_release].[dv_build_release_config] &#xA;@vault_release_number = ?" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="0"
+                SQLTask:DtsVariableName="$Project::Release_Number"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="3"
+                SQLTask:ParameterSize="-1" />
+            </SQLTask:SqlTaskData>
+          </DTS:ObjectData>
+        </DTS:Executable>
+        <DTS:Executable
+          DTS:refId="Package\SC_Build_the_Release\SQL_Full_Mark_All_Objects"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{4B6585E0-8DF8-4E2D-98F1-29C0C73549F8}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Full_Mark_All_Objects"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="0">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{696663A8-28BD-4D77-90CB-DECB5C3ACD8B}"
+              SQLTask:SqlStatementSource="EXECUTE [dv_config].[dv_global_config_update]&#xA; @vault_config_update_type = 'Set_Release'&#xA;,@vault_release_number     = ?" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="0"
+                SQLTask:DtsVariableName="$Project::Release_Number"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="3"
+                SQLTask:ParameterSize="-1" />
+            </SQLTask:SqlTaskData>
+          </DTS:ObjectData>
+        </DTS:Executable>
+        <DTS:Executable
+          DTS:refId="Package\SC_Build_the_Release\SQL_Start_Build"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{8212E635-9B1F-481F-A3C8-6395A20BA2EE}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Start_Build"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="0">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{696663A8-28BD-4D77-90CB-DECB5C3ACD8B}"
+              SQLTask:SqlStatementSource="PRINT 'Start'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+          </DTS:ObjectData>
+        </DTS:Executable>
+      </DTS:Executables>
+      <DTS:PrecedenceConstraints>
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Build_the_Release.PrecedenceConstraints[Constraint]"
+          DTS:CreationName=""
+          DTS:DTSID="{28CBCD50-74EC-443D-B6C2-F477FDA9BF5D}"
+          DTS:EvalOp="3"
+          DTS:Expression="@[$Project::FullRelease] == True"
+          DTS:From="Package\SC_Build_the_Release\SQL_Start_Build"
+          DTS:ObjectName="Constraint"
+          DTS:To="Package\SC_Build_the_Release\SQL_Full_Mark_All_Objects" />
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Build_the_Release.PrecedenceConstraints[Constraint 1]"
+          DTS:CreationName=""
+          DTS:DTSID="{E74EB3AA-5CD9-4468-A610-B6DCB45C6FDE}"
+          DTS:From="Package\SC_Build_the_Release\SQL_Full_Mark_All_Objects"
+          DTS:ObjectName="Constraint 1"
+          DTS:To="Package\SC_Build_the_Release\SQL_Build_the_Release" />
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Build_the_Release.PrecedenceConstraints[Constraint 2]"
+          DTS:CreationName=""
+          DTS:DTSID="{5B9188AB-1BC9-4757-862E-87C86B7FE70D}"
+          DTS:EvalOp="3"
+          DTS:Expression="@[$Project::FullRelease] == False"
+          DTS:From="Package\SC_Build_the_Release\SQL_Start_Build"
+          DTS:ObjectName="Constraint 2"
+          DTS:To="Package\SC_Build_the_Release\SQL_Build_the_Release" />
+      </DTS:PrecedenceConstraints>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\SC_Move_the_Release"
+      DTS:CreationName="STOCK:SEQUENCE"
+      DTS:Description="Sequence Container"
+      DTS:DTSID="{3923501A-4634-4B79-83DE-076BE484B207}"
+      DTS:ExecutableType="STOCK:SEQUENCE"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="SC_Move_the_Release">
+      <DTS:Variables />
+      <DTS:Executables>
+        <DTS:Executable
+          DTS:refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object"
+          DTS:CreationName="Microsoft.Pipeline"
+          DTS:Description="Data Flow Task"
+          DTS:DTSID="{9254CF92-CE1C-4339-A3C7-FD9AA275FC08}"
+          DTS:ExecutableType="Microsoft.Pipeline"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="DF_Move_Release_From_Source_to_Object"
+          DTS:TaskContact="Performs high-performance data extraction, transformation and loading;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <pipeline
+              version="1">
+              <components>
+                <component
+                  refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination"
+                  componentClassID="Microsoft.OLEDBDestination"
+                  contactInfo="OLE DB Destination;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; All Rights Reserved; http://www.microsoft.com/sql/support;4"
+                  description="OLE DB Destination"
+                  name="OLE DB Destination"
+                  usesDispositions="true"
+                  version="4">
+                  <properties>
+                    <property
+                      dataType="System.Int32"
+                      description="The number of seconds before a command times out.  A value of 0 indicates an infinite time-out."
+                      name="CommandTimeout">0</property>
+                    <property
+                      dataType="System.String"
+                      description="Specifies the name of the database object used to open a rowset."
+                      name="OpenRowset">[dv_release].[dv_release_build]</property>
+                    <property
+                      dataType="System.String"
+                      description="Specifies the variable that contains the name of the database object used to open a rowset."
+                      name="OpenRowsetVariable"></property>
+                    <property
+                      dataType="System.String"
+                      description="The SQL command to be executed."
+                      name="SqlCommand"
+                      UITypeEditor="Microsoft.DataTransformationServices.Controls.ModalMultilineStringEditor"></property>
+                    <property
+                      dataType="System.Int32"
+                      description="Specifies the column code page to use when code page information is unavailable from the data source."
+                      name="DefaultCodePage">1252</property>
+                    <property
+                      dataType="System.Boolean"
+                      description="Forces the use of the DefaultCodePage property value when describing character data."
+                      name="AlwaysUseDefaultCodePage">false</property>
+                    <property
+                      dataType="System.Int32"
+                      description="Specifies the mode used to access the database."
+                      name="AccessMode"
+                      typeConverter="AccessMode">3</property>
+                    <property
+                      dataType="System.Boolean"
+                      description="Indicates whether the values supplied for identity columns will be copied to the destination. If false, values for identity columns will be auto-generated at the destination. Applies only if fast load is turned on."
+                      name="FastLoadKeepIdentity">false</property>
+                    <property
+                      dataType="System.Boolean"
+                      description="Indicates whether the columns containing null will have null inserted in the destination. If false, columns containing null will have their default values inserted at the destination. Applies only if fast load is turned on."
+                      name="FastLoadKeepNulls">false</property>
+                    <property
+                      dataType="System.String"
+                      description="Specifies options to be used with fast load.  Applies only if fast load is turned on."
+                      name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+                    <property
+                      dataType="System.Int32"
+                      description="Specifies when commits are issued during data insertion.  A value of 0 specifies that one commit will be issued at the end of data insertion.  Applies only if fast load is turned on."
+                      name="FastLoadMaxInsertCommitSize">2147483647</property>
+                  </properties>
+                  <connections>
+                    <connection
+                      refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Connections[OleDbConnection]"
+                      connectionManagerID="{119B01DD-7234-4C23-86C8-FE6404070425}:external"
+                      connectionManagerRefId="Project.ConnectionManagers[Release_Object_Database]"
+                      description="The OLE DB runtime connection used to access the database."
+                      name="OleDbConnection" />
+                  </connections>
+                  <inputs>
+                    <input
+                      refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input]"
+                      errorOrTruncationOperation="Insert"
+                      errorRowDisposition="FailComponent"
+                      hasSideEffects="true"
+                      name="OLE DB Destination Input">
+                      <inputColumns>
+                        <inputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].Columns[release_number]"
+                          cachedDataType="i4"
+                          cachedName="release_number"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_number]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_number]" />
+                        <inputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].Columns[release_statement_type]"
+                          cachedCodepage="1252"
+                          cachedDataType="str"
+                          cachedLength="10"
+                          cachedName="release_statement_type"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_statement_type]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement_type]" />
+                        <inputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].Columns[release_statement]"
+                          cachedCodepage="1252"
+                          cachedDataType="text"
+                          cachedName="release_statement"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_statement]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement]" />
+                        <inputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].Columns[affected_row_count]"
+                          cachedDataType="i4"
+                          cachedName="affected_row_count"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[affected_row_count]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[affected_row_count]" />
+                        <inputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].Columns[release_statement_sequence]"
+                          cachedDataType="i4"
+                          cachedName="release_statement_sequence"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_statement_sequence]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement_sequence]" />
+                        <inputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].Columns[release_build_key]"
+                          cachedDataType="i4"
+                          cachedName="release_build_key"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_build_key]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_build_key]" />
+                      </inputColumns>
+                      <externalMetadataColumns
+                        isUsed="True">
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_build_key]"
+                          dataType="i4"
+                          name="release_build_key" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_statement_sequence]"
+                          dataType="i4"
+                          name="release_statement_sequence" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_number]"
+                          dataType="i4"
+                          name="release_number" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_statement_type]"
+                          codePage="1252"
+                          dataType="str"
+                          length="10"
+                          name="release_statement_type" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[release_statement]"
+                          codePage="1252"
+                          dataType="text"
+                          name="release_statement" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input].ExternalColumns[affected_row_count]"
+                          dataType="i4"
+                          name="affected_row_count" />
+                      </externalMetadataColumns>
+                    </input>
+                  </inputs>
+                  <outputs>
+                    <output
+                      refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Outputs[OLE DB Destination Error Output]"
+                      exclusionGroup="1"
+                      isErrorOut="true"
+                      name="OLE DB Destination Error Output"
+                      synchronousInputId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input]">
+                      <outputColumns>
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Outputs[OLE DB Destination Error Output].Columns[ErrorCode]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Outputs[OLE DB Destination Error Output].Columns[ErrorCode]"
+                          name="ErrorCode"
+                          specialFlags="1" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Outputs[OLE DB Destination Error Output].Columns[ErrorColumn]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Outputs[OLE DB Destination Error Output].Columns[ErrorColumn]"
+                          name="ErrorColumn"
+                          specialFlags="2" />
+                      </outputColumns>
+                      <externalMetadataColumns />
+                    </output>
+                  </outputs>
+                </component>
+                <component
+                  refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source"
+                  componentClassID="Microsoft.OLEDBSource"
+                  contactInfo="OLE DB Source;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; All Rights Reserved; http://www.microsoft.com/sql/support;7"
+                  description="OLE DB Source"
+                  name="OLE DB Source"
+                  usesDispositions="true"
+                  version="7">
+                  <properties>
+                    <property
+                      dataType="System.Int32"
+                      description="The number of seconds before a command times out.  A value of 0 indicates an infinite time-out."
+                      name="CommandTimeout">0</property>
+                    <property
+                      dataType="System.String"
+                      description="Specifies the name of the database object used to open a rowset."
+                      name="OpenRowset"></property>
+                    <property
+                      dataType="System.String"
+                      description="Specifies the variable that contains the name of the database object used to open a rowset."
+                      name="OpenRowsetVariable"></property>
+                    <property
+                      dataType="System.String"
+                      description="The SQL command to be executed."
+                      name="SqlCommand"
+                      UITypeEditor="Microsoft.DataTransformationServices.Controls.ModalMultilineStringEditor"></property>
+                    <property
+                      dataType="System.String"
+                      description="The variable that contains the SQL command to be executed."
+                      name="SqlCommandVariable">User::strSelectTheRelease</property>
+                    <property
+                      dataType="System.Int32"
+                      description="Specifies the column code page to use when code page information is unavailable from the data source."
+                      name="DefaultCodePage">1252</property>
+                    <property
+                      dataType="System.Boolean"
+                      description="Forces the use of the DefaultCodePage property value when describing character data."
+                      name="AlwaysUseDefaultCodePage">false</property>
+                    <property
+                      dataType="System.Int32"
+                      description="Specifies the mode used to access the database."
+                      name="AccessMode"
+                      typeConverter="AccessMode">3</property>
+                    <property
+                      dataType="System.String"
+                      description="The mappings between the parameters in the SQL command and variables."
+                      name="ParameterMapping"></property>
+                  </properties>
+                  <connections>
+                    <connection
+                      refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Connections[OleDbConnection]"
+                      connectionManagerID="{696663A8-28BD-4D77-90CB-DECB5C3ACD8B}:external"
+                      connectionManagerRefId="Project.ConnectionManagers[Release_Source_Database]"
+                      description="The OLE DB runtime connection used to access the database."
+                      name="OleDbConnection" />
+                  </connections>
+                  <outputs>
+                    <output
+                      refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output]"
+                      name="OLE DB Source Output">
+                      <outputColumns>
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_number]"
+                          dataType="i4"
+                          errorOrTruncationOperation="Conversion"
+                          errorRowDisposition="FailComponent"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_number]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_number]"
+                          name="release_number"
+                          truncationRowDisposition="FailComponent" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement_type]"
+                          codePage="1252"
+                          dataType="str"
+                          errorOrTruncationOperation="Conversion"
+                          errorRowDisposition="FailComponent"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_statement_type]"
+                          length="10"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement_type]"
+                          name="release_statement_type"
+                          truncationRowDisposition="FailComponent" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement]"
+                          codePage="1252"
+                          dataType="text"
+                          errorOrTruncationOperation="Conversion"
+                          errorRowDisposition="FailComponent"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_statement]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement]"
+                          name="release_statement"
+                          truncationRowDisposition="FailComponent" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[affected_row_count]"
+                          dataType="i4"
+                          errorOrTruncationOperation="Conversion"
+                          errorRowDisposition="FailComponent"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[affected_row_count]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[affected_row_count]"
+                          name="affected_row_count"
+                          truncationRowDisposition="FailComponent" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement_sequence]"
+                          dataType="i4"
+                          errorOrTruncationOperation="Conversion"
+                          errorRowDisposition="FailComponent"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_statement_sequence]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_statement_sequence]"
+                          name="release_statement_sequence"
+                          truncationRowDisposition="FailComponent" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_build_key]"
+                          dataType="i4"
+                          errorOrTruncationOperation="Conversion"
+                          errorRowDisposition="FailComponent"
+                          externalMetadataColumnId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_build_key]"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].Columns[release_build_key]"
+                          name="release_build_key"
+                          truncationRowDisposition="FailComponent" />
+                      </outputColumns>
+                      <externalMetadataColumns
+                        isUsed="True">
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_number]"
+                          dataType="i4"
+                          name="release_number" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_statement_type]"
+                          codePage="1252"
+                          dataType="str"
+                          length="10"
+                          name="release_statement_type" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_statement]"
+                          codePage="1252"
+                          dataType="text"
+                          name="release_statement" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[affected_row_count]"
+                          dataType="i4"
+                          name="affected_row_count" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_statement_sequence]"
+                          dataType="i4"
+                          name="release_statement_sequence" />
+                        <externalMetadataColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output].ExternalColumns[release_build_key]"
+                          dataType="i4"
+                          name="release_build_key" />
+                      </externalMetadataColumns>
+                    </output>
+                    <output
+                      refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output]"
+                      isErrorOut="true"
+                      name="OLE DB Source Error Output">
+                      <outputColumns>
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_build_key]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_build_key]"
+                          name="release_build_key" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_number]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_number]"
+                          name="release_number" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_statement_sequence]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_statement_sequence]"
+                          name="release_statement_sequence" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_statement_type]"
+                          codePage="1252"
+                          dataType="str"
+                          length="10"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_statement_type]"
+                          name="release_statement_type" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_statement]"
+                          codePage="1252"
+                          dataType="text"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[release_statement]"
+                          name="release_statement" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[affected_row_count]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[affected_row_count]"
+                          name="affected_row_count" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[ErrorCode]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[ErrorCode]"
+                          name="ErrorCode"
+                          specialFlags="1" />
+                        <outputColumn
+                          refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[ErrorColumn]"
+                          dataType="i4"
+                          lineageId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Error Output].Columns[ErrorColumn]"
+                          name="ErrorColumn"
+                          specialFlags="2" />
+                      </outputColumns>
+                      <externalMetadataColumns />
+                    </output>
+                  </outputs>
+                </component>
+              </components>
+              <paths>
+                <path
+                  refId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object.Paths[OLE DB Source Output]"
+                  endId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination.Inputs[OLE DB Destination Input]"
+                  name="OLE DB Source Output"
+                  startId="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source.Outputs[OLE DB Source Output]" />
+              </paths>
+            </pipeline>
+          </DTS:ObjectData>
+        </DTS:Executable>
+        <DTS:Executable
+          DTS:refId="Package\SC_Move_the_Release\SQL_Remove_release_from_Object"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{D6A9591C-9364-4F39-B9E9-15F83D879F11}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Remove_release_from_Object"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="2">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{119B01DD-7234-4C23-86C8-FE6404070425}"
+              SQLTask:SqlStatementSource="DELETE FROM [dv_release].[dv_release_build] WHERE [release_number] = ?" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="0"
+                SQLTask:DtsVariableName="$Project::Release_Number"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="3"
+                SQLTask:ParameterSize="0" />
+            </SQLTask:SqlTaskData>
+          </DTS:ObjectData>
+        </DTS:Executable>
+        <DTS:Executable
+          DTS:refId="Package\SC_Move_the_Release\SQL_Start_the_Move"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{D2FAA3AA-09B7-4425-85FC-2A97E01BF40D}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Start_the_Move"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="2">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{696663A8-28BD-4D77-90CB-DECB5C3ACD8B}"
+              SQLTask:SqlStatementSource="Print 'Start'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+          </DTS:ObjectData>
+        </DTS:Executable>
+      </DTS:Executables>
+      <DTS:PrecedenceConstraints>
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Move_the_Release.PrecedenceConstraints[Constraint]"
+          DTS:CreationName=""
+          DTS:DTSID="{F9950BEB-A4E6-45D7-A017-E59538914B4A}"
+          DTS:From="Package\SC_Move_the_Release\SQL_Remove_release_from_Object"
+          DTS:LogicalAnd="True"
+          DTS:ObjectName="Constraint"
+          DTS:To="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object" />
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Move_the_Release.PrecedenceConstraints[Constraint 1]"
+          DTS:CreationName=""
+          DTS:DTSID="{4BF10D16-8DF8-4A26-9F9C-D51B644539C5}"
+          DTS:EvalOp="3"
+          DTS:Expression="@[$Project::doCopyRelease] == True"
+          DTS:From="Package\SC_Move_the_Release\SQL_Start_the_Move"
+          DTS:LogicalAnd="True"
+          DTS:ObjectName="Constraint 1"
+          DTS:To="Package\SC_Move_the_Release\SQL_Remove_release_from_Object" />
+      </DTS:PrecedenceConstraints>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\SC_Start_the_Release"
+      DTS:CreationName="STOCK:SEQUENCE"
+      DTS:Description="Sequence Container"
+      DTS:DTSID="{2C850894-7C79-4202-97BF-DED82850194A}"
+      DTS:ExecutableType="STOCK:SEQUENCE"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="SC_Start_the_Release">
+      <DTS:Variables />
+      <DTS:Executables>
+        <DTS:Executable
+          DTS:refId="Package\SC_Start_the_Release\SQL_Create_Release_Header"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{7DBD14A6-3374-46A2-A207-24E708A8076B}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Create_Release_Header"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="0">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{696663A8-28BD-4D77-90CB-DECB5C3ACD8B}"
+              SQLTask:SqlStatementSource="EXECUTE [dv_release].[dv_release_master_insert]&#xA;@release_number       = ?&#xA;,@release_description = ?&#xA;,@reference_number    = ?&#xA;,@reference_source    = ?" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="0"
+                SQLTask:DtsVariableName="$Project::Release_Number"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="3"
+                SQLTask:ParameterSize="-1" />
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="1"
+                SQLTask:DtsVariableName="$Project::Release_Description"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="130"
+                SQLTask:ParameterSize="-1" />
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="2"
+                SQLTask:DtsVariableName="$Project::Release_Reference"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="130"
+                SQLTask:ParameterSize="-1" />
+              <SQLTask:ParameterBinding
+                SQLTask:ParameterName="3"
+                SQLTask:DtsVariableName="$Project::Release_Reference_Source"
+                SQLTask:ParameterDirection="Input"
+                SQLTask:DataType="130"
+                SQLTask:ParameterSize="-1" />
+            </SQLTask:SqlTaskData>
+          </DTS:ObjectData>
+        </DTS:Executable>
+        <DTS:Executable
+          DTS:refId="Package\SC_Start_the_Release\SQL_Start the Release"
+          DTS:CreationName="Microsoft.ExecuteSQLTask"
+          DTS:Description="Execute SQL Task"
+          DTS:DTSID="{B00DCE02-9095-4701-987B-DBF54D085A7E}"
+          DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+          DTS:LocaleID="-1"
+          DTS:ObjectName="SQL_Start the Release"
+          DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2016; © 2015 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+          DTS:ThreadHint="0">
+          <DTS:Variables />
+          <DTS:ObjectData>
+            <SQLTask:SqlTaskData
+              SQLTask:Connection="{696663A8-28BD-4D77-90CB-DECB5C3ACD8B}"
+              SQLTask:SqlStatementSource="Print 'Start'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+          </DTS:ObjectData>
+        </DTS:Executable>
+      </DTS:Executables>
+      <DTS:PrecedenceConstraints>
+        <DTS:PrecedenceConstraint
+          DTS:refId="Package\SC_Start_the_Release.PrecedenceConstraints[Constraint]"
+          DTS:CreationName=""
+          DTS:DTSID="{361BFAE1-5BD7-4178-BC62-A25A257B181F}"
+          DTS:EvalOp="3"
+          DTS:Expression="@[$Project::doCreateReleaseHeader] == True"
+          DTS:From="Package\SC_Start_the_Release\SQL_Start the Release"
+          DTS:LogicalAnd="True"
+          DTS:ObjectName="Constraint"
+          DTS:To="Package\SC_Start_the_Release\SQL_Create_Release_Header" />
+      </DTS:PrecedenceConstraints>
+    </DTS:Executable>
+  </DTS:Executables>
+  <DTS:PrecedenceConstraints>
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint]"
+      DTS:CreationName=""
+      DTS:DTSID="{672904D0-D912-4D2C-AC31-855BB5960A4F}"
+      DTS:From="Package\SC_Build_the_Release"
+      DTS:ObjectName="Constraint"
+      DTS:To="Package\SC_Move_the_Release" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 1]"
+      DTS:CreationName=""
+      DTS:DTSID="{68C3B217-9FA1-4976-998F-C71F513DB832}"
+      DTS:EvalOp="3"
+      DTS:Expression="@[$Project::doApplyRelease] == True"
+      DTS:From="Package\SC_Move_the_Release"
+      DTS:ObjectName="Constraint 1"
+      DTS:To="Package\SC_Apply_The_Release" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 3]"
+      DTS:CreationName=""
+      DTS:DTSID="{E5AFC8EC-1C10-4986-8587-CA06FD4E1A65}"
+      DTS:EvalOp="3"
+      DTS:Expression="@[$Project::doBuildRelease] == False"
+      DTS:From="Package\SC_Start_the_Release"
+      DTS:ObjectName="Constraint 3"
+      DTS:To="Package\SC_Move_the_Release" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 4]"
+      DTS:CreationName=""
+      DTS:DTSID="{8F22BB6D-B8F0-4775-8867-90421D0A471D}"
+      DTS:EvalOp="3"
+      DTS:Expression="@[$Project::doBuildRelease] == True"
+      DTS:From="Package\SC_Start_the_Release"
+      DTS:ObjectName="Constraint 4"
+      DTS:To="Package\SC_Build_the_Release" />
+  </DTS:PrecedenceConstraints>
+  <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
+<!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
+<!--If you manually edit this section and make a mistake, you can delete it. -->
+<!--The package will still be able to load normally but the previous layout information will be lost and the designer will automatically re-arrange the elements on the design surface.-->
+<Objects
+  Version="8">
+  <!--Each node below will contain properties that do not affect runtime behavior.-->
+  <Package
+    design-time-name="Package">
+    <LayoutInfo>
+      <GraphLayout
+        Capacity="32" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mssgm="clr-namespace:Microsoft.SqlServer.Graph.Model;assembly=Microsoft.SqlServer.Graph">
+        <NodeLayout
+          Size="192.8,41.6"
+          Id="Package\SC_Apply_The_Release\SQL_Apply_the_Release"
+          TopLeft="5.50000000000006,209.5" />
+        <NodeLayout
+          Size="217.6,41.6"
+          Id="Package\SC_Apply_The_Release\SQL_Full_Remove_All_Config"
+          TopLeft="163.5,107.5" />
+        <NodeLayout
+          Size="176,41.6"
+          Id="Package\SC_Apply_The_Release\SQL_Start_the_Build"
+          TopLeft="14,5.5" />
+        <EdgeLayout
+          Id="Package\SC_Apply_The_Release.PrecedenceConstraints[Constraint]"
+          TopLeft="72.5833333333334,47.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,162"
+              Start="0,0"
+              End="0,154.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,154.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="-8,69.25,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package\SC_Apply_The_Release.PrecedenceConstraints[Constraint 1]"
+          TopLeft="130,47.1">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="142.3,60.4"
+              Start="0,0"
+              End="142.3,52.9">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,20.4864864864865" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,20.4864864864865"
+                    Point2="0,24.4864864864865"
+                    Point3="4,24.4864864864865" />
+                  <mssgle:LineSegment
+                    End="138.3,24.4864864864865" />
+                  <mssgle:CubicBezierSegment
+                    Point1="138.3,24.4864864864865"
+                    Point2="142.3,24.4864864864865"
+                    Point3="142.3,28.4864864864865" />
+                  <mssgle:LineSegment
+                    End="142.3,52.9" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="63.15,29.4864864864865,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package\SC_Apply_The_Release.PrecedenceConstraints[Constraint 2]"
+          TopLeft="272.3,149.1">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-139.6,60.4"
+              Start="0,0"
+              End="-139.6,52.9">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,31.9417283950617" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,31.9417283950617"
+                    Point2="0,35.9417283950617"
+                    Point3="-4,35.9417283950617" />
+                  <mssgle:LineSegment
+                    End="-135.6,35.9417283950617" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-135.6,35.9417283950617"
+                    Point2="-139.6,35.9417283950617"
+                    Point3="-139.6,39.9417283950617" />
+                  <mssgle:LineSegment
+                    End="-139.6,52.9" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <ContainerLayout
+          HeaderHeight="43"
+          IsExpanded="True"
+          PanelSize="400,307.2"
+          Size="400,350.4"
+          Id="Package\SC_Apply_The_Release"
+          TopLeft="1119.5,231.5" />
+        <NodeLayout
+          Size="190.4,41.6"
+          Id="Package\SC_Build_the_Release\SQL_Build_the_Release"
+          TopLeft="205.5,209.5" />
+        <NodeLayout
+          Size="233.6,41.6"
+          Id="Package\SC_Build_the_Release\SQL_Full_Mark_All_Objects"
+          TopLeft="5.50000000000003,107.5" />
+        <NodeLayout
+          Size="155.2,41.6"
+          Id="Package\SC_Build_the_Release\SQL_Start_Build"
+          TopLeft="223,5.5" />
+        <EdgeLayout
+          Id="Package\SC_Build_the_Release.PrecedenceConstraints[Constraint]"
+          TopLeft="276,47.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-153.5,60"
+              Start="0,0"
+              End="-153.5,52.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,20.367816091954" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,20.367816091954"
+                    Point2="0,24.367816091954"
+                    Point3="-4,24.367816091954" />
+                  <mssgle:LineSegment
+                    End="-149.5,24.367816091954" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-149.5,24.367816091954"
+                    Point2="-153.5,24.367816091954"
+                    Point3="-153.5,28.367816091954" />
+                  <mssgle:LineSegment
+                    End="-153.5,52.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="-84.75,29.367816091954,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package\SC_Build_the_Release.PrecedenceConstraints[Constraint 1]"
+          TopLeft="122.5,149.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="147.666666666667,60"
+              Start="0,0"
+              End="147.666666666667,52.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,31.6993736951983" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,31.6993736951983"
+                    Point2="0,35.6993736951983"
+                    Point3="4,35.6993736951983" />
+                  <mssgle:LineSegment
+                    End="143.666666666667,35.6993736951983" />
+                  <mssgle:CubicBezierSegment
+                    Point1="143.666666666667,35.6993736951983"
+                    Point2="147.666666666667,35.6993736951983"
+                    Point3="147.666666666667,39.6993736951983" />
+                  <mssgle:LineSegment
+                    End="147.666666666667,52.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package\SC_Build_the_Release.PrecedenceConstraints[Constraint 2]"
+          TopLeft="327.916666666667,47.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,162"
+              Start="0,0"
+              End="0,154.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,154.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="-8,69.25,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <ContainerLayout
+          HeaderHeight="43"
+          IsExpanded="True"
+          PanelSize="400.8,307.2"
+          Size="400.8,350.4"
+          Id="Package\SC_Build_the_Release"
+          TopLeft="47,226.5" />
+        <NodeLayout
+          Size="284,41.6"
+          Id="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object"
+          TopLeft="5.50000000000003,209.5" />
+        <NodeLayout
+          Size="244.8,41.6"
+          Id="Package\SC_Move_the_Release\SQL_Remove_release_from_Object"
+          TopLeft="25,107.5" />
+        <NodeLayout
+          Size="215.2,41.6"
+          Id="Package\SC_Move_the_Release\SQL_Start_the_Move"
+          TopLeft="40,5.5" />
+        <EdgeLayout
+          Id="Package\SC_Move_the_Release.PrecedenceConstraints[Constraint]"
+          TopLeft="147.5,149.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,60"
+              Start="0,0"
+              End="0,52.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,52.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package\SC_Move_the_Release.PrecedenceConstraints[Constraint 1]"
+          TopLeft="147.5,47.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,60"
+              Start="0,0"
+              End="0,52.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,52.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="-8,18.25,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <ContainerLayout
+          HeaderHeight="43"
+          IsExpanded="True"
+          PanelSize="295.2,307.2"
+          Size="295.2,350.4"
+          Id="Package\SC_Move_the_Release"
+          TopLeft="672,361.5" />
+        <NodeLayout
+          Size="216,41.6"
+          Id="Package\SC_Start_the_Release\SQL_Create_Release_Header"
+          TopLeft="5.50000000000001,107.5" />
+        <NodeLayout
+          Size="184,41.6"
+          Id="Package\SC_Start_the_Release\SQL_Start the Release"
+          TopLeft="21.5,5.5" />
+        <EdgeLayout
+          Id="Package\SC_Start_the_Release.PrecedenceConstraints[Constraint]"
+          TopLeft="113.5,47.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,60"
+              Start="0,0"
+              End="0,52.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,52.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="-8,18.25,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <ContainerLayout
+          HeaderHeight="43"
+          IsExpanded="True"
+          PanelSize="227.2,204.8"
+          Size="227.2,248"
+          Id="Package\SC_Start_the_Release"
+          TopLeft="701,35.5" />
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint]"
+          TopLeft="448,458.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="224,78"
+              Start="0,0"
+              End="216.5,78">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="86.2116040955632,0" />
+                  <mssgle:CubicBezierSegment
+                    Point1="86.2116040955632,0"
+                    Point2="90.2116040955632,0"
+                    Point3="90.2116040955632,4" />
+                  <mssgle:LineSegment
+                    End="90.2116040955632,74" />
+                  <mssgle:CubicBezierSegment
+                    Point1="90.2116040955632,74"
+                    Point2="90.2116040955632,78"
+                    Point3="94.2116040955632,78" />
+                  <mssgle:LineSegment
+                    End="216.5,78" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 1]"
+          TopLeft="967,536.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="152.5,-130"
+              Start="0,0"
+              End="145,-130">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="72.2500000000001,0" />
+                  <mssgle:CubicBezierSegment
+                    Point1="72.2500000000001,0"
+                    Point2="76.2500000000001,0"
+                    Point3="76.2500000000001,-4" />
+                  <mssgle:LineSegment
+                    End="76.2500000000001,-126" />
+                  <mssgle:CubicBezierSegment
+                    Point1="76.2500000000001,-126"
+                    Point2="76.2500000000001,-130"
+                    Point3="80.2500000000001,-130" />
+                  <mssgle:LineSegment
+                    End="145,-130" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="68.2500000000001,1,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 3]"
+          TopLeft="817,283.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,78"
+              Start="0,0"
+              End="0,70.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,70.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="-8,27.25,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 4]"
+          TopLeft="701,159.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-253,185"
+              Start="0,0"
+              End="-245.5,185">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="-147.109215017065,0" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-147.109215017065,0"
+                    Point2="-151.109215017065,0"
+                    Point3="-151.109215017065,4" />
+                  <mssgle:LineSegment
+                    End="-151.109215017065,181" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-151.109215017065,181"
+                    Point2="-151.109215017065,185"
+                    Point3="-155.109215017065,185" />
+                  <mssgle:LineSegment
+                    End="-245.5,185" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="-159.109215017065,-22,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+      </GraphLayout>
+    </LayoutInfo>
+  </Package>
+  <TaskHost
+    design-time-name="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object">
+    <LayoutInfo>
+      <GraphLayout
+        Capacity="4" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
+        <NodeLayout
+          Size="150,42"
+          Id="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source"
+          TopLeft="135,75" />
+        <NodeLayout
+          Size="171,42"
+          Id="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination"
+          TopLeft="127,243" />
+        <EdgeLayout
+          Id="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object.Paths[OLE DB Source Output]"
+          TopLeft="211.25,117">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,126"
+              Start="0,0"
+              End="0,118.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,118.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+      </GraphLayout>
+    </LayoutInfo>
+  </TaskHost>
+  <PipelineComponentMetadata
+    design-time-name="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Destination">
+    <Properties>
+      <Property>
+        <Name>DataSourceViewID</Name>
+      </Property>
+      <Property>
+        <Name>TableInfoObjectType</Name>
+        <Value
+          type="q2:string">Table</Value>
+      </Property>
+    </Properties>
+  </PipelineComponentMetadata>
+  <PipelineComponentMetadata
+    design-time-name="Package\SC_Move_the_Release\DF_Move_Release_From_Source_to_Object\OLE DB Source">
+    <Properties>
+      <Property>
+        <Name>DataSourceViewID</Name>
+      </Property>
+      <Property>
+        <Name>TableInfoObjectType</Name>
+        <Value
+          type="q2:string">Table</Value>
+      </Property>
+    </Properties>
+  </PipelineComponentMetadata>
+</Objects>]]></DTS:DesignTimeProperties>
+</DTS:Executable>

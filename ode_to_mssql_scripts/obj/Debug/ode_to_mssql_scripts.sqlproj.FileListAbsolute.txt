@@ -8,9 +8,12 @@ C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\
 C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\bin\Debug\ode_to_mssql_scripts.dacpac
 C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\bin\Debug\ode_to_mssql_scripts.dll
 C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\bin\Debug\ode_to_mssql_scripts.pdb
+C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\ode_to_mssql_scripts.dll
+C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\ode_to_mssql_scripts.pdb
+C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\ReleaseScript\ode_to_mssql_scripts.dacpac
+C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\ReleaseScript\ode_to_mssql_scripts.dll
+C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\ReleaseScript\ode_to_mssql_scripts.pdb
 C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\Model.xml
 C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\refactor.xml
 C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\postdeploy.sql
 C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\predeploy.sql
-C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\ode_to_mssql_scripts.dll
-C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\obj\Debug\ode_to_mssql_scripts.pdb

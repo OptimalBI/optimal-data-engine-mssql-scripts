@@ -29,10 +29,10 @@ DECLARE @schema VARCHAR(128)
 ,@table VARCHAR(128)
 ,@key VARCHAR(128)
 ,@order INT
-,@SQL VARCHAR(max)
-,@SQLOUT VARCHAR(1000)
-,@ParmDefinition VARCHAR(500)
-,@output VARCHAR(1000);
+,@SQL NVARCHAR(max)
+,@SQLOUT NVARCHAR(1000)
+,@ParmDefinition NVARCHAR(500)
+,@output NVARCHAR(1000);
 
 SET @ParmDefinition = N'@SQLOutVal VARCHAR(1000) OUTPUT';
 
@@ -72,7 +72,7 @@ BEGIN
 
  WHILE @@FETCH_STATUS = 0
  BEGIN
- PRINT REPLACE(@output, 'dv_hub_key_column_delete', 'dv_hub_key_delete')
+ PRINT REPLACE(REPLACE(@output, 'dv_hub_key_column_delete', 'dv_hub_key_delete'), 'dv_link_key_column_delete', 'dv_link_key_delete')
 
  FETCH NEXT
  FROM subcur

@@ -14,7 +14,7 @@
     </RootPath>
     <RootNamespace>ode_to_mssql_scripts</RootNamespace>
     <AssemblyName>ode_to_mssql_scripts</AssemblyName>
-    <ModelCollation>1033, CI</ModelCollation>
+    <ModelCollation>1033,CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
@@ -23,6 +23,9 @@
     <SqlServerVerification>False</SqlServerVerification>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseSet>True</TargetDatabaseSet>
+    <GenerateCreateScript>True</GenerateCreateScript>
+    <DefaultCollation>Latin1_General_CI_AS</DefaultCollation>
+    <EnableFullTextSearch>False</EnableFullTextSearch>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -36,7 +39,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\ReleaseScript\</OutputPath>
     <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DebugSymbols>true</DebugSymbols>
@@ -59,6 +62,10 @@
     <Folder Include="Properties" />
     <Folder Include="Configuration" />
     <Folder Include="Management" />
+    <Folder Include="dbo" />
+    <Folder Include="dbo\Stored Procedures\" />
+    <Folder Include="dbo\User Defined Types\" />
+    <Folder Include="ReleaseScript" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Configuration\Create_Hub_and_Satellite.sql" />
@@ -66,5 +73,20 @@
     <None Include="Configuration\Create_Missing_Vault_Objects.sql" />
     <None Include="Management\Back_Out_Release.sql" />
     <None Include="Management\Version_Business_Rules.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="dbo\Stored Procedures\ODE_object_match_config.sql" />
+    <Build Include="dbo\Stored Procedures\ODE_link_sat_config.sql" />
+    <Build Include="dbo\Stored Procedures\ODE_hub_sat_config.sql" />
+    <Build Include="dbo\User Defined Types\dv_link_detail_list.sql" />
+    <Build Include="dbo\User Defined Types\dv_column_matching_list.sql" />
+    <Build Include="dbo\User Defined Types\dv_column_list.sql" />
+    <Build Include="dbo\Stored Procedures\ODE_version_source_rule.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <SqlCmdVariable Include="ConfigDatabase">
+      <DefaultValue>ODE_Config</DefaultValue>
+      <Value>$(SqlCmdVar__1)</Value>
+    </SqlCmdVariable>
   </ItemGroup>
 </Project>
