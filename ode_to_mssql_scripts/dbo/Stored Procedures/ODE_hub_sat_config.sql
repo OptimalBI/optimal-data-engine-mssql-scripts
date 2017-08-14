@@ -1,6 +1,4 @@
-﻿
-
-CREATE PROCEDURE [dbo].[ODE_hub_sat_config]
+﻿CREATE PROCEDURE [dbo].[ODE_hub_sat_config]
 --
 (
  @SatelliteOnly char(1)				--= 'Y'
@@ -12,23 +10,25 @@ CREATE PROCEDURE [dbo].[ODE_hub_sat_config]
 ,@ReleaseReference VARCHAR(50)		--= 'HR-304'
 	-- User Story and/or Task numbers for the Satellite which you are building.
 ,@ReleaseSource VARCHAR(50)			--= 'Jira'
-	-- system the reference number refers to, Rally
-,@StageDatabase VARCHAR(128)		--= 'ode_stage_MAGODE_40'
+	-- system the reference number refers to e.g. Jira, Rally
+,@StageDatabase VARCHAR(128)		--= 'ODE_TempStage'
 	-- the name of the Stage Database which holds the table on which the Load will be modelled (this Stage table  needs to exist. The script will use the meta data of the table to build the required Configuration in ODE)
 	-- To check, select * from ODE_Config.dbo.dv_source_table where table_name = 'YourSourceTableName' eg. 'Adventureworks__Sales__SalesOrderHeader'
 ,@StageSchema VARCHAR(128)			--= 'Stage'
-,@StageTable VARCHAR(128)			--= 'link_Sale_Match_Test'
-,@StageSourceType VARCHAR(50)		--= 'BespokeProc', 'ExternalStage', 'LeftRightComparison'
+,@StageTable VARCHAR(128)			--= 'Sale_Match_Test'
+,@StageSourceType VARCHAR(50)		--= 'BespokeProc', 'ExternalStage', 'LeftRightComparison', 'SSISPackage'
 ,@StageLoadType VARCHAR(50)         -- 'Full' or 'Delta'
-,@StagePassLoadTypeToProc BIT		-- 0 = Dont Pass it on, 1 = Pass Delta / Full to Proc
+,@StagePassLoadTypeToProc BIT		= 0 -- 0 = Dont Pass it on, 1 = Pass Delta / Full to Proc - Only applicable to BespokeProc
+,@SourceDataFilter NVARCHAR(MAX)	= NULL -- = 'RecordStatus = 1' - Only applicable to SSISPackage
 ,@HubName VARCHAR(128)				--= 'link_Sale_Match_Test'  --'Customer'--NULL -- to Default the Hub Name to the sat name - good for pure Raw Vault.
 	-- For completely Raw Hub Sat combinations, you can leave this column as null. The Script will create a Hub using the same name as the source table.
 	-- For Business hubs, specify the name of the Hub of the Ensemble, which you are adding to.
 ,@SatelliteName VARCHAR(128)		--= 'link_Sale_Match_Test'
 
-,@VaultName VARCHAR(128)            --=  'ode_vault_MAGODE_40'
+,@VaultName VARCHAR(128)            --=  'ODE_Vault'
 	--the name of the vault where the Hub and Satellite will be created.
-,@ScheduleName VARCHAR(128)			--=  'Full_Load'
+,@FullScheduleName VARCHAR(128)		--=  'Full_Load'
+,@IncrementScheduleName VARCHAR(128) --= 'Increment_Load'
 	--the schedule the load is to run in. This schedule needs to exist prior to running this script.
 ,@HubKeyNames	[dbo].[dv_column_list] READONLY
 --declare @HubKeyNames table(HubKeyName VARCHAR(128)
@@ -39,8 +39,11 @@ CREATE PROCEDURE [dbo].[ODE_hub_sat_config]
 ----The name of the unique Key columns. The columns need to exist in your Stage Table, and should be appropriately named for the Hub, which you are building.
 -- List the Columns in the order in which you want them to appear in the Hub.
 ,@SourceSystemName              VARCHAR(128) = NULL
+,@SouceTableSchema				VARCHAR(128) = NULL
+,@SourceTableName				VARCHAR(128) = NULL
+,@SSISPackageName				VARCHAR(128) = NULL
+,@DerivedColumnsList [dbo].[dv_column_matching_list] READONLY
 
---EXECUTE [dv_scheduler].[dv_schedule_insert] 'Full_Load', 'For Testing Purposes', 'Ad Hoc', 0
 ) AS
 BEGIN
 SET NOCOUNT ON
@@ -53,8 +56,13 @@ DECLARE
  @sat_is_columnstore  BIT = 1
 ,@sat_is_compressed   BIT = 0
 ,@hub_is_compressed   BIT = 1
+,@stage_is_columnstore BIT = 1
+,@stage_is_compressed BIT = 0
 	-- Note that Columnstore is only available in SQL Server Enterprise Edition.
 ,@duplicate_removal_threshold INT = 0
+,@hub_schema VARCHAR(128) = 'hub' --or rawhub
+,@sat_schema VARCHAR(128) = 'sat' --or rawsat
+-- Make sure that schema exists in the Vault
 ,@DevServerName SYSNAME				= 'Ignore'
 	-- You can provide a Server Name here to prevent accidentally creating keys and objects in the wrong environment.
 ,@BusinessVaultName VARCHAR(128)	= 'Ignore'
@@ -69,8 +77,8 @@ Begin:
 
 -- Exclude the Hub Key from the Satellite if it is in Business Vault. Otherwise keep it.
 
-select 1 from [$(ConfigDatabase)] .[dbo].[dv_stage_database] sd
-inner join [$(ConfigDatabase)] .[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
+select 1 from [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
+inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
 where sd.[stage_database_name] = @StageDatabase
 and ss.[stage_schema_name] = @StageSchema
 if @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
@@ -110,8 +118,18 @@ DECLARE
 ,@hub_source_column_key			INT
 ,@ServerName					SYSNAME
 ,@HubKeyName					VARCHAR(128)
+,@DerColName					VARCHAR(128)
+,@DerColValue					VARCHAR(50)
+,@DerColKey						INT
+,@DerColType					VARCHAR(30)
+,@DerColLength					INT
+,@DerColPrecision				INT
+,@DerColScale					INT
+,@DerColCollation				NVARCHAR(128)
+,@DerColOrdinalPos				INT
 ,@OrdinalPosition				INT
-,@source_procedure_name         varchar(128) = case when @StageSourceType = 'BespokeProc' then 'usp_' + @StageTable else NULL end
+,@source_procedure_name         varchar(128) = case when @StageSourceType = 'BespokeProc' then 'usp_' + @StageTable 
+												WHEN @StageSourceType = 'SSISPackage' THEN @SSISPackageName else NULL end
 ,@pass_load_type_to_proc		BIT = case when @StageSourceType = 'BespokeProc' then @StagePassLoadTypeToProc else 0 end
 
 select @StagePassLoadTypeToProc, @pass_load_type_to_proc
@@ -126,13 +144,13 @@ select @ServerName = @@servername
 --   end
 --
 
-if @StageLoadType not in ('Full', 'Delta') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
+if @StageLoadType not in ('Full', 'Delta', 'ODEcdc', 'MSSQLcdc') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
 /********************************************
 Release:
 ********************************************/
 --'Find the Next Release for the Sprint'
 SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
-FROM [$(ConfigDatabase)] .[dv_release].[dv_release_master]
+FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
 WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @sprintdate
 ORDER BY 1 DESC
 IF @@rowcount = 0
@@ -142,7 +160,7 @@ SET @release_number = cast(@sprintdate + right('00' + cast(@seqint + 1 AS VARCHA
 SELECT @release_number
 SET @Description = 'Load Stage Table: ' + quotename(@StageTable) + ' into ' + quotename(@VaultName)
 -- Create the Release:
-EXECUTE  @release_key = [$(ConfigDatabase)] .[dv_release].[dv_release_master_insert]  @release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
+EXECUTE  @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert]  @release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
 																,@release_description	= @Description		-- what the release is for
 																,@reference_number		= @ReleaseReference
 																,@reference_source		= @ReleaseSource
@@ -153,8 +171,8 @@ Hub:
 -- Configure the Hub:
 if @SatelliteOnly = 'N'
 begin
-SELECT @abbn = [$(ConfigDatabase)] .[dbo].[fn_get_next_abbreviation]()
-EXECUTE @hub_key = [$(ConfigDatabase)] .[dbo].[dv_hub_insert] 
+SELECT @abbn = [$(ConfigDatabase)].[dbo].[fn_get_next_abbreviation]()
+EXECUTE @hub_key = [$(ConfigDatabase)].[dbo].[dv_hub_insert] 
 				   @hub_name = @HubName
 				  ,@hub_abbreviation = @abbn
 				  ,@hub_schema = 'hub'
@@ -167,7 +185,7 @@ else
 begin
 select @hub_key			= [hub_key]
       ,@hub_database	= [hub_database]
-from [$(ConfigDatabase)] .[dbo].[dv_hub] 
+from [$(ConfigDatabase)].[dbo].[dv_hub] 
 where [hub_name] = @HubName
 if @hub_database <> @VaultName
 begin
@@ -179,8 +197,8 @@ end
 Satellite:
 ********************************************/
 -- Configure the Satellite:
-SELECT @abbn = [$(ConfigDatabase)] .[dbo].[fn_get_next_abbreviation]()
-EXECUTE @satellite_key = [$(ConfigDatabase)] .[dbo].[dv_satellite_insert] 
+SELECT @abbn = [$(ConfigDatabase)].[dbo].[fn_get_next_abbreviation]()
+EXECUTE @satellite_key = [$(ConfigDatabase)].[dbo].[dv_satellite_insert] 
 						 @hub_key					= @hub_key
 						,@link_key					= 0 --Dont fill in for a Hub
 						,@link_hub_satellite_flag	= 'H'
@@ -198,30 +216,88 @@ EXECUTE @satellite_key = [$(ConfigDatabase)] .[dbo].[dv_satellite_insert]
 Stage Table:
 ********************************************/
 SELECT 'Build the Stage Table with its columns: '
-EXECUTE [$(ConfigDatabase)] .[dv_config].[dv_populate_source_table_columns] 
+EXECUTE [$(ConfigDatabase)].[dv_config].[dv_populate_source_table_columns] 
    @vault_stage_database		= @StageDatabase
   ,@vault_stage_schema			= @StageSchema
   ,@vault_stage_table			= @StageTable
   ,@vault_source_unique_name	= @StageTable
-  ,@vault_source_type			= @StageSourceType
+  --,@vault_source_type			= @StageSourceType
   ,@vault_stage_table_load_type = @StageLoadType
   ,@vault_source_system_name	= @SourceSystemName
+  ,@vault_source_table_schema	= @SouceTableSchema
+  ,@vault_source_table_name		= @SourceTableName
   ,@vault_release_number		= @release_number
   ,@vault_rerun_column_insert	= 0
-select @source_table_key = source_table_key from [$(ConfigDatabase)] .[dbo].[dv_source_table] where [source_unique_name] = @StageTable
--- Add a Current Source Version with a "Version" of 1 
+  ,@is_columnstore				= @stage_is_columnstore
+  ,@is_compressed				= @stage_is_compressed
+select @source_table_key = source_table_key from [$(ConfigDatabase)].[dbo].[dv_source_table] where [source_unique_name] = @StageTable
 
-EXECUTE @source_version_key = [$(ConfigDatabase)] .[dbo].[dv_source_version_insert] 
+-- Add a Current Source Version with a "Version" of 1 
+EXECUTE @source_version_key = [$(ConfigDatabase)].[dbo].[dv_source_version_insert] 
    @source_table_key		= @source_table_key
   ,@source_version			= 1
+  ,@source_type				= @StageSourceType
   ,@source_procedure_name   = @source_procedure_name
+  ,@source_filter			= @SourceDataFilter
   ,@pass_load_type_to_proc	= @pass_load_type_to_proc
   ,@is_current				= 1
   ,@release_number			= @release_number
+  
+--Add derived column constraints
 
+DECLARE curDerCol CURSOR FOR  
+SELECT left_column_name, right_column_name
+FROM @DerivedColumnsList
+ORDER BY left_column_name
 
+OPEN curDerCol   
+FETCH NEXT FROM curDerCol INTO @DerColName, @DerColValue  
+
+WHILE @@FETCH_STATUS = 0   
+BEGIN 
+
+SELECT @DerColKey = [column_key]
+      ,@DerColType = [column_type]
+	  ,@DerColLength = [column_length]
+	  ,@DerColPrecision = [column_precision]
+	  ,@DerColScale = [column_scale]
+	  ,@DerColCollation = [Collation_Name]
+	  ,@DerColOrdinalPos = [source_ordinal_position]
+FROM [$(ConfigDatabase)].[dbo].[dv_column]
+WHERE [column_key] IN (
+SELECT c.[column_key]
+FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
+inner join [$(ConfigDatabase)].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+WHERE 1=1
+and st.source_table_key = @source_table_key
+and c.column_name = @DerColName
+)
+
+EXECUTE [$(ConfigDatabase)].[dbo].[dv_column_update]
+@column_key = @DerColKey
+,@table_key = @source_table_key
+,@satellite_col_key = NULL
+,@column_name = @DerColName
+,@column_type = @DerColType
+,@column_length = @DerColLength
+,@column_precision = @DerColPrecision
+,@column_scale = @DerColScale
+,@Collation_Name = @DerColCollation
+,@is_derived = 1
+,@derived_value = @DerColValue
+,@source_ordinal_position = @DerColOrdinalPos
+,@is_source_date = 0
+,@is_retired = 0
+
+FETCH NEXT FROM curDerCol INTO @DerColName, @DerColValue   
+END   
+
+CLOSE curDerCol   
+DEALLOCATE curDerCol
+
+-----
 SELECT 'Hook the Source Columns up to the Satellite:'
-EXECUTE [$(ConfigDatabase)] .[dv_config].[dv_populate_satellite_columns] 
+EXECUTE [$(ConfigDatabase)].[dv_config].[dv_populate_satellite_columns] 
    @vault_source_unique_name	= @StageTable
   ,@vault_satellite_name		= @SatelliteName
   ,@vault_release_number		= @release_number
@@ -250,22 +326,22 @@ SELECT @hub_key_column_type			= 'varchar'	--[column_type]
 	  ,@hub_key_column_scale		= 0			--[column_scale]
 	  ,@hub_key_Collation_Name	    = null		--[Collation_Name]
       ,@hub_source_column_key		= [column_key]
-FROM [$(ConfigDatabase)] .[dbo].[dv_column] c
+FROM [$(ConfigDatabase)].[dbo].[dv_column] c
 WHERE [column_key] IN (
 SELECT c.[column_key]
-FROM [$(ConfigDatabase)] .[dbo].[dv_source_table] st 
-inner join [$(ConfigDatabase)] .[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
+inner join [$(ConfigDatabase)].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
 WHERE 1=1
 and st.source_table_key = @source_table_key
 and c.column_name = @HubKeyName
 )
 
 SELECT *
-FROM [$(ConfigDatabase)] .[dbo].[dv_column] c
+FROM [$(ConfigDatabase)].[dbo].[dv_column] c
 WHERE [column_key] IN (
 SELECT c.[column_key]
-FROM [$(ConfigDatabase)] .[dbo].[dv_source_table] st 
-inner join [$(ConfigDatabase)] .[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
+inner join [$(ConfigDatabase)].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
 WHERE 1=1
 and st.source_table_key = @source_table_key
 --and c.column_name = @HubKeyName
@@ -284,7 +360,7 @@ begin
 		   ,@OrdinalPosition
 		   ,@release_number
 	
-	EXECUTE @hub_key_column_key = [$(ConfigDatabase)] .[dbo].[dv_hub_key_insert] 
+	EXECUTE @hub_key_column_key = [$(ConfigDatabase)].[dbo].[dv_hub_key_insert] 
 								 @hub_key					= @hub_key
 								,@hub_key_column_name		= @HubKeyName
 								,@hub_key_column_type		= @hub_key_column_type
@@ -298,7 +374,7 @@ end
 else
 begin
 	select @hub_key_column_key = [hub_key_column_key]
-	from [$(ConfigDatabase)] .[dbo].[dv_hub_key_column]
+	from [$(ConfigDatabase)].[dbo].[dv_hub_key_column]
 	where [hub_key] = @hub_key
 	and [hub_key_column_name] = @HubKeyName
 	--if @@rowcount > 1
@@ -311,7 +387,7 @@ select  hub_key_column_key		 = @hub_key_column_key
 	   ,hub_source_column_key	 = @hub_source_column_key
 	   ,HubKeyName				 = @HubKeyName
 
-EXECUTE [$(ConfigDatabase)] .[dbo].[dv_hub_column_insert] 
+EXECUTE [$(ConfigDatabase)].[dbo].[dv_hub_column_insert] 
 	 @hub_key_column_key	= @hub_key_column_key
 	,@link_key_column_key	= NULL
 	,@column_key			= @hub_source_column_key
@@ -327,18 +403,18 @@ DEALLOCATE curHubKey
 Tidy Up:
 ********************************************/
 -- Remove the Columns in the Exclude List from the Satellite:
-update [$(ConfigDatabase)] .[dbo].[dv_column]
+update [$(ConfigDatabase)].[dbo].[dv_column]
 set [satellite_col_key] = NULL
 where [column_name] IN (
 SELECT *
 FROM @ExcludeColumns)
-and [column_key] in(select c.column_key from [$(ConfigDatabase)] .[dbo].[dv_column] c 
-                    inner join [$(ConfigDatabase)] .[dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
+and [column_key] in (select c.column_key from [$(ConfigDatabase)].[dbo].[dv_column] c 
+                    inner join [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
 					where sc.[satellite_key] = @satellite_key)
 
 -- If you don't want Keys in the satellites:
 	DELETE
-	FROM [$(ConfigDatabase)] .[dbo].[dv_satellite_column]
+	FROM [$(ConfigDatabase)].[dbo].[dv_satellite_column]
 	WHERE [satellite_col_key] IN (
 		select sc.[satellite_col_key]
 		from [$(ConfigDatabase)] .[dbo].[dv_satellite_column] sc
@@ -349,32 +425,44 @@ and [column_key] in(select c.column_key from [$(ConfigDatabase)] .[dbo].[dv_colu
 /********************************************
 Scheduler:
 ********************************************/
--- Add the Source the the required Schedule:
-EXECUTE [$(ConfigDatabase)] .[dv_scheduler].[dv_schedule_source_table_insert] 
-   @schedule_name				= @ScheduleName
+-- Add the Source the the required Full Schedule:
+EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
+   @schedule_name				= @FullScheduleName
   ,@source_unique_name			= @StageTable
   ,@source_table_load_type		= 'Full'
   ,@priority					= 'Low'
-  ,@queue						= '001'
+  ,@queue						= 'Agent001'
   ,@release_number				= @release_number
 --
+-- Add the Source the the required Increment Schedule:
+EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
+   @schedule_name				= @IncrementScheduleName
+  ,@source_unique_name			= @StageTable
+  ,@source_table_load_type		= 'Delta'
+  ,@priority					= 'Low'
+  ,@queue						= 'Agent001'
+  ,@release_number				= @release_number
 /********************************************
 Useful Commands:
 ********************************************/
 --Output commands to Build the Tables and test the Load:
-SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [dbo].[dv_create_hub_table] ''' + @VaultName + ''',''' + @HubName + ''',''N''' else '' end
+SELECT case when @SatelliteOnly = 'N' then 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_create_hub_table] ''' + @VaultName + ''',''' + @HubName + ''',''N''' else '' end
 UNION
-SELECT 'EXECUTE [dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
+SELECT 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
-SELECT 'EXECUTE [dbo].[dv_load_source_table]
+SELECT 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
 ,@vault_source_load_type = ''full'''
 UNION
-SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)] .[dbo].[fn_get_object_name] (hub_name, 'hub'))
+SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, @hub_schema))
 from [$(ConfigDatabase)] .[dbo].[dv_hub] where hub_name = @HubName
 UNION
-SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)] .[dbo].[fn_get_object_name] (satellite_name, 'sat'))
+SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, @sat_schema))
 from [$(ConfigDatabase)] .[dbo].[dv_satellite] where satellite_name =  @SatelliteName
+--UNION
+--SELECT 'EXECUTE [ODE_Admin].[Admin].[ODE_Create_Data_Access_Functions_All_Single] ''' + @VaultName + ''',''' + @SatelliteName + ''
+--UNION
+--SELECT 'EXECUTE [ODE_Admin].[Admin].[ODE_Create_Data_Access_Functions_PIT_Single] ''' + @VaultName + ''',''' + @SatelliteName + ''
 --
 PRINT 'succeeded';
 -- Commit if successful:
