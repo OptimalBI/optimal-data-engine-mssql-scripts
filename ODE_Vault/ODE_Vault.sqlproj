@@ -4,17 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>ode_to_mssql_scripts</Name>
+    <Name>ODE_Vault</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
-    <ProjectGuid>{515f8719-d524-4dbd-8639-fce70781cf15}</ProjectGuid>
+    <ProjectGuid>{ce91fcd8-59cc-45dd-aa7e-c177286b0ac6}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
-    <RootNamespace>ode_to_mssql_scripts</RootNamespace>
-    <AssemblyName>ode_to_mssql_scripts</AssemblyName>
-    <ModelCollation>1033,CI</ModelCollation>
+    <RootNamespace>ODE_Vault</RootNamespace>
+    <AssemblyName>ODE_Vault</AssemblyName>
+    <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
@@ -23,9 +23,7 @@
     <SqlServerVerification>False</SqlServerVerification>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseSet>True</TargetDatabaseSet>
-    <GenerateCreateScript>True</GenerateCreateScript>
-    <DefaultCollation>Latin1_General_CI_AS</DefaultCollation>
-    <EnableFullTextSearch>False</EnableFullTextSearch>
+    <Recovery>SIMPLE</Recovery>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -39,7 +37,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\ReleaseScript\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DebugSymbols>true</DebugSymbols>
@@ -60,38 +58,14 @@
   <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
     <Folder Include="Properties" />
-    <Folder Include="Configuration" />
-    <Folder Include="Management" />
-    <Folder Include="dbo" />
-    <Folder Include="dbo\Stored Procedures\" />
-    <Folder Include="dbo\User Defined Types\" />
-    <Folder Include="ReleaseScript" />
-    <Folder Include="Admin\" />
-    <Folder Include="Admin\Stored Procedures\" />
+    <Folder Include="dbo\" />
+    <Folder Include="dbo\Tables\" />
     <Folder Include="Security\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Configuration\Create_Missing_Vault_Objects.sql" />
-    <None Include="Management\Back_Out_Release.sql" />
-    <None Include="Management\Version_Business_Rules.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <Build Include="dbo\Stored Procedures\ODE_object_match_config.sql" />
-    <Build Include="dbo\Stored Procedures\ODE_link_sat_config.sql" />
-    <Build Include="dbo\Stored Procedures\ODE_hub_sat_config.sql" />
-    <Build Include="dbo\User Defined Types\dv_link_detail_list.sql" />
-    <Build Include="dbo\User Defined Types\dv_column_matching_list.sql" />
-    <Build Include="dbo\User Defined Types\dv_column_list.sql" />
-    <Build Include="dbo\Stored Procedures\ODE_version_source_rule.sql" />
-    <Build Include="Admin\Stored Procedures\ODE_Create_Data_Access_Functions_PIT_Single.sql" />
-    <Build Include="Admin\Stored Procedures\ODE_Create_Data_Access_Functions_All_Single.sql" />
-    <Build Include="Admin\Stored Procedures\ODE_Build_Vault_Object_Create_Statements.sql" />
-    <Build Include="Security\Admin.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <SqlCmdVariable Include="ConfigDatabase">
-      <DefaultValue>ODE_Config</DefaultValue>
-      <Value>$(SqlCmdVar__1)</Value>
-    </SqlCmdVariable>
+    <Build Include="dbo\Tables\dv_task_state.sql" />
+    <Build Include="Security\Sat.sql" />
+    <Build Include="Security\Hub.sql" />
+    <Build Include="Security\Access.sql" />
   </ItemGroup>
 </Project>

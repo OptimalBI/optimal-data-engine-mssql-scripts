@@ -1,0 +1,3 @@
+﻿CREATE SCHEMA [Sat]
+    AUTHORIZATION [dbo];
+
