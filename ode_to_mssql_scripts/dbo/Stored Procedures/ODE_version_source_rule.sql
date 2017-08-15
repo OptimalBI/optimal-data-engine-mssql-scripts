@@ -35,6 +35,8 @@ DECLARE @source_version_key			INT
 	   ,@release_number				INT
 	   ,@Description				VARCHAR(256)
 	   ,@release_key				INT
+	   ,@source_filter				NVARCHAR(MAX)
+	   ,@source_type				VARCHAR(50)
 
 /********************************************
 Log4TSQL Journal Constants
@@ -103,10 +105,12 @@ SELECT @source_version_key_prior	= sv.source_version_key
 	  ,@source_procedure_name		= sv.source_procedure_name
 	  ,@pass_load_type_to_proc		= sv.pass_load_type_to_proc
 	  ,@is_current					= sv.is_current
+	  ,@source_filter				= sv.source_filter
+	  ,@source_type					= sv.source_type
 FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st
 inner join [$(ConfigDatabase)].[dbo].[dv_source_version] sv on sv.source_table_key = st.source_table_key
   WHERE st.[source_unique_name] = @SourceUniqueName
-  AND st.source_type = @SourceType
+  AND sv.source_type = @SourceType
   AND sv.is_current = 1
 IF @@ROWCOUNT <> 1 RAISERROR('Invalid @SourceUniqueName provided: %s', 16, 1, @SourceUniqueName);
 
@@ -116,7 +120,7 @@ SET @_Step = 'Build the Release';
 /*******************************************/
 --'Find the Next Release for the Sprint'
 SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
-FROM [$(ConfigDatabase)] .[dv_release].[dv_release_master]
+FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
 WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @sprintdate
 ORDER BY 1 DESC
 IF @@rowcount = 0
@@ -130,7 +134,7 @@ SET @Description = 'Version Bespoke Proc for Source: ' + quotename(@SourceUnique
 SET @_Step = 'Create the Release:';
 /*******************************************/
 
-EXECUTE  @release_key = [$(ConfigDatabase)] .[dv_release].[dv_release_master_insert]  
+EXECUTE  @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert]  
 						@release_number			= @release_number	-- date of the Sprint Start + ad hoc release number
 					   ,@release_description	= @Description		-- what the release is for																
 					   ,@reference_number		= @ReleaseReference
@@ -144,7 +148,9 @@ EXECUTE [$(ConfigDatabase)].[dbo].[dv_source_version_update]
    @source_version_key		= @source_version_key_prior
   ,@source_table_key		= @source_table_key
   ,@source_version			= @source_version
+  ,@source_type				= @source_type
   ,@source_procedure_name	= @source_procedure_name
+  ,@source_filter			= @source_filter
   ,@pass_load_type_to_proc  = @pass_load_type_to_proc
   ,@is_current				= 0
 --Because the Update Proc doesn't update the Release key (yet):
@@ -163,7 +169,7 @@ IF ISNULL(@SourceProcedureName, '') = ''
 BEGIN
     -- When No Procedure Name is Provided, Use the prior Procedure Name and Suffix it with the Version:
     -- Strip off any Trailing Version Number
-	WHILE RIGHT(@source_procedure_name, 1) IN('_','0','1','2','3','4','5','6','7','8','9')
+	WHILE RIGHT(@source_procedure_name, 1) IN ('_','0','1','2','3','4','5','6','7','8','9')
 	BEGIN
 		SELECT @source_procedure_name = LEFT(@source_procedure_name, LEN(@source_procedure_name)-1)
 	END
@@ -182,6 +188,8 @@ EXECUTE [$(ConfigDatabase)].[dbo].[dv_source_version_insert]
    @source_table_key		= @source_table_key
   ,@source_version			= @source_version
   ,@source_procedure_name   = @source_procedure_name
+  ,@source_type				= @source_type
+  ,@source_filter			= @source_filter
   ,@pass_load_type_to_proc  = @pass_load_type_to_proc
   ,@is_current				= 1
   ,@release_number			= @release_number

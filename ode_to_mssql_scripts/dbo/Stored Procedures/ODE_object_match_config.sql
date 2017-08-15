@@ -91,8 +91,8 @@ Begin:
 
 -- Exclude the Hub Key from the Satellite if it is in Business Vault. Otherwise keep it.
 
-select 1 from [$(ConfigDatabase)] .[dbo].[dv_stage_database] sd
-inner join [$(ConfigDatabase)] .[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
+select 1 from [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
+inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
 where sd.[stage_database_name] = @StageDatabase
 and ss.[stage_schema_name] = @StageSchema
 if @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
