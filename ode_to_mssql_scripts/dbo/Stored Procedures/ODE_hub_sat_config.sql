@@ -17,14 +17,13 @@
 ,@StageSchema VARCHAR(128)			--= 'Stage'
 ,@StageTable VARCHAR(128)			--= 'Sale_Match_Test'
 ,@StageSourceType VARCHAR(50)		--= 'BespokeProc', 'ExternalStage', 'LeftRightComparison', 'SSISPackage'
-,@StageLoadType VARCHAR(50)         -- 'Full' or 'Delta'
+,@StageLoadType VARCHAR(50)         -- 'Full' , 'Delta', 'ODEcdc' or 'MSSQLcdc'
 ,@StagePassLoadTypeToProc BIT		= 0 -- 0 = Dont Pass it on, 1 = Pass Delta / Full to Proc - Only applicable to BespokeProc
 ,@SourceDataFilter NVARCHAR(MAX)	= NULL -- = 'RecordStatus = 1' - Only applicable to SSISPackage
 ,@HubName VARCHAR(128)				--= 'link_Sale_Match_Test'  --'Customer'--NULL -- to Default the Hub Name to the sat name - good for pure Raw Vault.
 	-- For completely Raw Hub Sat combinations, you can leave this column as null. The Script will create a Hub using the same name as the source table.
 	-- For Business hubs, specify the name of the Hub of the Ensemble, which you are adding to.
 ,@SatelliteName VARCHAR(128)		--= 'link_Sale_Match_Test'
-
 ,@VaultName VARCHAR(128)            --=  'ODE_Vault'
 	--the name of the vault where the Hub and Satellite will be created.
 ,@FullScheduleName VARCHAR(128)		--=  'Full_Load'
@@ -77,8 +76,8 @@ Begin:
 
 -- Exclude the Hub Key from the Satellite if it is in Business Vault. Otherwise keep it.
 
-select 1 from [$(ConfigDatabase)] .[dbo].[dv_stage_database] sd
-inner join [$(ConfigDatabase)] .[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
+select 1 from [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
+inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
 where sd.[stage_database_name] = @StageDatabase
 and ss.[stage_schema_name] = @StageSchema
 if @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
@@ -446,18 +445,20 @@ EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert]
 Useful Commands:
 ********************************************/
 --Output commands to Build the Tables and test the Load:
-SELECT case when @SatelliteOnly = 'N' then 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_create_hub_table] ''' + @VaultName + ''',''' + @HubName + ''',''N''' else '' end
+SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [dbo].[dv_create_hub_table] ''' + @VaultName + ''',''' + @HubName + ''',''N''' else '' end
 UNION
-SELECT 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
+SELECT 'EXECUTE [dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
-SELECT 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_load_source_table]
+SELECT 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y'''
+UNION
+SELECT 'EXECUTE [dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
 ,@vault_source_load_type = ''full'''
 UNION
-SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, @hub_schema))
+SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, hub_schema))
 from [$(ConfigDatabase)] .[dbo].[dv_hub] where hub_name = @HubName
 UNION
-SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, @sat_schema))
+SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, satellite_schema))
 from [$(ConfigDatabase)] .[dbo].[dv_satellite] where satellite_name =  @SatelliteName
 --UNION
 --SELECT 'EXECUTE [ODE_Admin].[Admin].[ODE_Create_Data_Access_Functions_All_Single] ''' + @VaultName + ''',''' + @SatelliteName + ''
