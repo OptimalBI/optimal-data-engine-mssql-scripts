@@ -26,8 +26,8 @@
 ,@SatelliteName VARCHAR(128)		--= 'link_Sale_Match_Test'
 ,@VaultName VARCHAR(128)            --=  'ODE_Vault'
 	--the name of the vault where the Hub and Satellite will be created.
-,@FullScheduleName VARCHAR(128)		--=  'Full_Load'
-,@IncrementScheduleName VARCHAR(128) --= 'Increment_Load'
+,@FullScheduleName VARCHAR(128)		= NULL --=  'Full_Load' or leave NULL if job doesn't require to be scheduled
+,@IncrementScheduleName VARCHAR(128) = NULL --= 'Increment_Load' or leave NULL if job doesn't require to be scheduled
 	--the schedule the load is to run in. This schedule needs to exist prior to running this script.
 ,@HubKeyNames	[dbo].[dv_column_list] READONLY
 --declare @HubKeyNames table(HubKeyName VARCHAR(128)
@@ -424,6 +424,7 @@ and [column_key] in (select c.column_key from [$(ConfigDatabase)].[dbo].[dv_colu
 /********************************************
 Scheduler:
 ********************************************/
+IF @FullScheduleName IS NOT NULL
 -- Add the Source the the required Full Schedule:
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @FullScheduleName
@@ -433,6 +434,7 @@ EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert]
   ,@queue						= 'Agent001'
   ,@release_number				= @release_number
 --
+IF @IncrementScheduleName IS NOT NULL
 -- Add the Source the the required Increment Schedule:
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @IncrementScheduleName

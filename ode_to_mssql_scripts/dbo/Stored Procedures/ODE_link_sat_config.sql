@@ -29,8 +29,8 @@ CREATE PROCEDURE [dbo].[ODE_link_sat_config]
 ,@SatelliteName					VARCHAR(128)		--= 'link_Sale_Customer_Order'
 ,@VaultName						VARCHAR(128)			--=  'ODE_vault'
 	--the name of the vault where the Hub and Satellite will be created.
-,@FullScheduleName				VARCHAR(128)		--=  'Full_Load'
-,@IncrementScheduleName			VARCHAR(128) --= 'Increment_Load'
+,@FullScheduleName				VARCHAR(128)	= NULL	--=  'Full_Load' or leave NULL if job doesn't require to be scheduled
+,@IncrementScheduleName			VARCHAR(128) = NULL --= 'Increment_Load' or leave NULL if job doesn't require to be scheduled
 	--the schedule the load is to run in. This schedule needs to exist prior to running this script.
 --EXECUTE [dv_scheduler].[dv_schedule_insert] 'Link_Schedule', 'For Testing Purposes', 'Ad Hoc', 0
 ,@Hub_key_list [dbo].[dv_link_detail_list] READONLY
@@ -409,6 +409,7 @@ WHERE [satellite_col_key] IN (
 /********************************************
 Scheduler:
 ********************************************/
+IF @FullScheduleName IS NOT NULL
 -- Add the Source the the required Full Schedule:
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @FullScheduleName
@@ -418,6 +419,7 @@ EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert]
   ,@queue						= 'Agent001'
   ,@release_number				= @release_number
 --
+IF @IncrementScheduleName IS NOT NULL
 -- Add the Source the the required Increment Schedule:
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @IncrementScheduleName
