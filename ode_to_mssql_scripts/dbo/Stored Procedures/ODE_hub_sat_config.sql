@@ -38,10 +38,16 @@
 ----The name of the unique Key columns. The columns need to exist in your Stage Table, and should be appropriately named for the Hub, which you are building.
 -- List the Columns in the order in which you want them to appear in the Hub.
 ,@SourceSystemName              VARCHAR(128) = NULL
+-- The name of the source system as at the table dv_source_system. If the source system is new for this ensemble, it should be created manually first
 ,@SouceTableSchema				VARCHAR(128) = NULL
+-- The schema of the source table. In case of SSIS package source, this should be a schema of the source CDC function
 ,@SourceTableName				VARCHAR(128) = NULL
+-- The source table name. In case of SSIS package source, this should be the source CDC funtion base name, without "_all" suffix though
 ,@SSISPackageName				VARCHAR(128) = NULL
+-- Only required if source type is SSIS package
 ,@DerivedColumnsList [dbo].[dv_column_matching_list] READONLY
+-- The list of derived columns, i.e. columns that don't exist in source, but require to be created on the way to ODE.
+-- For example, a part of multi-part hub key that represents a source system.
 
 ) AS
 BEGIN

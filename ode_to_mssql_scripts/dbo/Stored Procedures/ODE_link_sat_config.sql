@@ -34,11 +34,26 @@ CREATE PROCEDURE [dbo].[ODE_link_sat_config]
 	--the schedule the load is to run in. This schedule needs to exist prior to running this script.
 --EXECUTE [dv_scheduler].[dv_schedule_insert] 'Link_Schedule', 'For Testing Purposes', 'Ad Hoc', 0
 ,@Hub_key_list [dbo].[dv_link_detail_list] READONLY
+-- A list of hub keys
+/*
+Fields are:
+ hub key as it will be shown at link
+ hub actual name
+ actual hub column name
+ stage column name
+INSERT INTO @Hub_key_list VALUES ('Customer', 'Customer', 'CustomerID', 'CUST_ID')
+*/
 ,@SourceSystemName				VARCHAR(128) = NULL
+-- The name of the source system as at the table dv_source_system. If the source system is new for this ensemble, it should be created manually first
 ,@SouceTableSchema				VARCHAR(128) = NULL
+-- The schema of the source table. In case of SSIS package source, this should be a schema of the source CDC function
 ,@SourceTableName				VARCHAR(128) = NULL
+-- The source table name. In case of SSIS package source, this should be the source CDC funtion base name, without "_all" suffix though
 ,@SSISPackageName				VARCHAR(128) = NULL
+-- Only required if source type is SSIS package
 ,@DerivedColumnsList [dbo].[dv_column_matching_list] READONLY
+-- The list of derived columns, i.e. columns that don't exist in source, but require to be created on the way to ODE.
+-- For example, a part of multi-part hub key that represents a source system.
 )
 AS 
 BEGIN
