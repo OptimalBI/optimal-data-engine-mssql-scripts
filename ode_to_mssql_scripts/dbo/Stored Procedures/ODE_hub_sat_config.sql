@@ -133,6 +133,7 @@ DECLARE
 ,@DerColCollation				NVARCHAR(128)
 ,@DerColOrdinalPos				INT
 ,@OrdinalPosition				INT
+,@StageTableKey					varchar(128)
 ,@source_procedure_name         varchar(128) = case when @StageSourceType = 'BespokeProc' then 'usp_' + @StageTable 
 												WHEN @StageSourceType = 'SSISPackage' THEN @SSISPackageName else NULL end
 ,@pass_load_type_to_proc		BIT = case when @StageSourceType = 'BespokeProc' then @StagePassLoadTypeToProc else 0 end
@@ -407,6 +408,9 @@ DEALLOCATE curHubKey
 /********************************************
 Tidy Up:
 ********************************************/
+ SELECT @StageTableKey = REPLACE(REPLACE(column_name, '[', ''), ']','') FROM [$(ConfigDatabase)].[dbo].[fn_get_key_definition] (@StageTable,'stg')
+ insert into @ExcludeColumns values (@StageTableKey)
+
 -- Remove the Columns in the Exclude List from the Satellite:
 update [$(ConfigDatabase)].[dbo].[dv_column]
 set [satellite_col_key] = NULL
@@ -457,22 +461,16 @@ SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [dbo].[dv_create_hub_table] 
 UNION
 SELECT 'EXECUTE [dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
-SELECT 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y'''
-UNION
-SELECT 'EXECUTE [dbo].[dv_load_source_table]
+ SELECT CASE WHEN @StageSourceType = 'BespokeProc' THEN 'EXECUTE [dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
-,@vault_source_load_type = ''full'''
+,@vault_source_load_type = ''full''' ELSE 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y''' END
 UNION
 SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, hub_schema))
-from [$(ConfigDatabase)] .[dbo].[dv_hub] where hub_name = @HubName
+from [$(ConfigDatabase)].[dbo].[dv_hub] where hub_name = @HubName
 UNION
 SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, satellite_schema))
-from [$(ConfigDatabase)] .[dbo].[dv_satellite] where satellite_name =  @SatelliteName
---UNION
---SELECT 'EXECUTE [ODE_Admin].[Admin].[ODE_Create_Data_Access_Functions_All_Single] ''' + @VaultName + ''',''' + @SatelliteName + ''
---UNION
---SELECT 'EXECUTE [ODE_Admin].[Admin].[ODE_Create_Data_Access_Functions_PIT_Single] ''' + @VaultName + ''',''' + @SatelliteName + ''
---
+from [$(ConfigDatabase)].[dbo].[dv_satellite] where satellite_name =  @SatelliteName
+
 PRINT 'succeeded';
 -- Commit if successful:
 COMMIT;

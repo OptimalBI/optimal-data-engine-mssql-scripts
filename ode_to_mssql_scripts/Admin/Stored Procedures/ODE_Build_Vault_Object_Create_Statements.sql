@@ -55,7 +55,7 @@ SET NOCOUNT ON;
 declare @ReleaseKey int
 
 
-if @ReleaseNumber != 0 select @ReleaseKey = [release_key] from [ODE_Config].[dv_release].[dv_release_master] where [release_number] = @ReleaseNumber  
+if @ReleaseNumber != 0 select @ReleaseKey = [release_key] from [$(ConfigDatabase)].[dv_release].[dv_release_master] where [release_number] = @ReleaseNumber  
                 else set @ReleaseKey = 0
 
 if @Rebuild = 'Yes'
@@ -78,21 +78,21 @@ DECLARE hub_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then 
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([hub_name], 'Hub'
 )+''')' +
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''Y''''''
-where exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([hub_name], 'Hub'
 )+''')' 
 else 
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([hub_name], 'Hub'
 )+''')'
 end
-FROM [ODE_Config].[dbo].[dv_hub]
-WHERE [hub_key] > 0
+FROM [$(ConfigDatabase)].[dbo].[dv_hub]
+WHERE [hub_key] != 0
 and [release_key] = case when @ReleaseKey != 0 then [release_key] else @ReleaseKey end;
 OPEN hub_cursor;
 FETCH NEXT FROM hub_cursor INTO @SQL;
@@ -117,22 +117,21 @@ DECLARE link_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then 
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([link_name], 'Lnk'
 )+''')' +
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''Y''''''
-where  exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where  exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([link_name], 'Lnk'
 )+''')'
 else
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([link_name], 'Lnk'
 )+''')'
 end
-FROM
-[ODE_Config].[dbo].[dv_link]
-WHERE [link_key] > 0
+FROM [$(ConfigDatabase)].[dbo].[dv_link]
+WHERE [link_key] != 0
 and [release_key] = case when @ReleaseKey != 0 then [release_key] else @ReleaseKey end;;
 OPEN link_cursor;
 FETCH NEXT FROM link_cursor INTO @SQL;
@@ -157,22 +156,22 @@ DECLARE sat_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([satellite_name], 'Sat'
 )+''')'+
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''Y''''''
-where exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([satellite_name], 'Sat'
 )+''')'
 else  
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([satellite_name], 'Sat'
 )+''')'
 end
 FROM
-[ODE_Config].[dbo].[dv_satellite]
-WHERE [satellite_key] > 0
+[$(ConfigDatabase)].[dbo].[dv_satellite]
+WHERE [satellite_key] != 0
 and [release_key] = case when @ReleaseKey != 0 then [release_key] else @ReleaseKey end;;
 OPEN sat_cursor;
 FETCH NEXT FROM sat_cursor INTO @SQL;
@@ -197,23 +196,23 @@ DECLARE stage_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([stage_table_name], 'Stg'
 )+''')'+
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''Y''''''
-where exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([stage_table_name], 'Stg'
 )+''')'
 else  
 'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''N''''''
-where not exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [ODE_Config].[dbo].[fn_get_object_name]
+where not exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([stage_table_name], 'Stg'
 )+''')'
 end
 FROM
-[ODE_Config].[dbo].[dv_source_table] st
-INNER JOIN [ODE_Config].[dbo].[dv_stage_schema] ssc ON ssc.stage_schema_key = st.stage_schema_key
-INNER JOIN [ODE_Config].[dbo].[dv_stage_database] sd ON sd.stage_database_key = ssc.stage_database_key
+[$(ConfigDatabase)].[dbo].[dv_source_table] st
+INNER JOIN [$(ConfigDatabase)].[dbo].[dv_stage_schema] ssc ON ssc.stage_schema_key = st.stage_schema_key
+INNER JOIN [$(ConfigDatabase)].[dbo].[dv_stage_database] sd ON sd.stage_database_key = ssc.stage_database_key
 WHERE [source_table_key] > 0
 and st.[release_key] = case when @ReleaseKey != 0 then st.[release_key] else @ReleaseKey end;;
 OPEN stage_cursor;
