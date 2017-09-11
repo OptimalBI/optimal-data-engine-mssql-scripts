@@ -74,6 +74,11 @@ DECLARE
 	-- You can provide a name here to cause the Business key to be excluded from the Sat, in a specific Vault.
 DECLARE @ExcludeColumns TABLE (ColumnName VARCHAR(128))
 INSERT @ExcludeColumns  VALUES ('dv_stage_datetime')
+								, ('dv_stage_date_time')
+								, ('dv_source_version_key')
+								, ('dv_cdc_action')
+								, ('dv_cdc_high_water_date')
+								, ('dv_cdc_start_date')
 	--Insert columns which should never be included in the satellites.
 --print 'begin'
 /********************************************
@@ -465,10 +470,10 @@ UNION
  @vault_source_unique_name = ''' + @StageTable + '''
 ,@vault_source_load_type = ''full''' ELSE 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y''' END
 UNION
-SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, hub_schema))
+SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, 'hub'))
 from [$(ConfigDatabase)].[dbo].[dv_hub] where hub_name = @HubName
 UNION
-SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, satellite_schema))
+SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, 'sat'))
 from [$(ConfigDatabase)].[dbo].[dv_satellite] where satellite_name =  @SatelliteName
 
 PRINT 'succeeded';

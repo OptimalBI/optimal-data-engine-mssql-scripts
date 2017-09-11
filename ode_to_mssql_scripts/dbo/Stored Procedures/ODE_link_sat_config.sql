@@ -19,8 +19,8 @@ CREATE PROCEDURE [dbo].[ODE_link_sat_config]
 	-- To check, select * from ODE_Config.dbo.dv_source_table where table_name = 'YourSourceTableName' eg. 'Adventureworks__Sales__SalesOrderHeader'
 ,@StageSchema					VARCHAR(128)--= 'Stage'
 ,@StageTable					VARCHAR(128)--= 'link_Sale'
-,@StageSourceType				VARCHAR(50) --= 'BespokeProc', 'ExternalStage', 'LeftRightComparison', 'SSISPackage'
-,@StageLoadType					VARCHAR(50) -- 'Full' , 'Delta', 'ODEcdc' or 'MSSQLcdc'
+,@StageSourceType				VARCHAR(50) --= 'BespokeProc', 'ExternalStage'
+,@StageLoadType					VARCHAR(50) -- 'Full' , 'Delta'
 ,@StagePassLoadTypeToProc		BIT		-- 0 = Dont Pass it on, 1 = Pass Delta / Full to Proc
 ,@SourceDataFilter				NVARCHAR(MAX) = NULL -- = 'RecordStatus = 1' - Only applicable to SSISPackage
 ,@LinkName						VARCHAR(128)				--= 'Sale_Customer_Order'
@@ -49,9 +49,7 @@ INSERT INTO @Hub_key_list VALUES ('Customer', 'Customer', 'CustomerID', 'CUST_ID
 -- The schema of the source table. In case of SSIS package source, this should be a schema of the source CDC function
 ,@SourceTableName				VARCHAR(128) = NULL
 -- The source table name. In case of SSIS package source, this should be the source CDC funtion base name, without "_all" suffix though
-,@SSISPackageName				VARCHAR(128) = NULL
--- Only required if source type is SSIS package
-,@DerivedColumnsList [dbo].[dv_column_matching_list] READONLY
+--,@DerivedColumnsList [dbo].[dv_column_matching_list] READONLY
 -- The list of derived columns, i.e. columns that don't exist in source, but require to be created on the way to ODE.
 -- For example, a part of multi-part hub key that represents a source system.
 )
@@ -82,6 +80,11 @@ DECLARE
 	-- You can provide a name here to cause the Business key to be excluded from the Sat, in a specific Vault.
 DECLARE @ExcludeColumns TABLE (ColumnName VARCHAR(128))
 INSERT @ExcludeColumns  VALUES ('dv_stage_datetime')
+								, ('dv_stage_date_time')
+								, ('dv_source_version_key')
+								, ('dv_cdc_action')
+								, ('dv_cdc_high_water_date')
+								, ('dv_cdc_start_date')
 	--Insert columns which should never be included in the satellites.
 	-- Exclude the Hub Key from the Satellite if it is in Business Vault. Otherwise keep it.
 
@@ -134,8 +137,9 @@ DECLARE @seqint					INT
 ,@ServerName					SYSNAME
 ,@source_table_key				INT
 ,@source_version_key			INT
+,@StageTableKey					varchar(128)
 ,@source_procedure_name         varchar(128) = case when @StageSourceType = 'BespokeProc' then 'usp_' + @StageTable 
-												WHEN @StageSourceType = 'SSISPackage' THEN @SSISPackageName else NULL end
+												else NULL end
 ,@pass_load_type_to_proc		BIT = case when @StageLoadType = 'BespokeProc' then @StagePassLoadTypeToProc else 0 end
 --
 --SET @uspName = 'usp_' + @SourceTable
@@ -147,7 +151,7 @@ select @ServerName = @@servername
 --   begin
 --   raiserror( 'This Process may only be run in the Development environment!!', 16, 1)
 --   end
-if @StageLoadType not in ('Full', 'Delta', 'ODEcdc', 'MSSQLcdc') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
+if @StageLoadType not in ('Full', 'Delta') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
 /********************************************
 Release:
 ********************************************/
@@ -247,55 +251,55 @@ EXECUTE @source_version_key = [$(ConfigDatabase)].[dbo].[dv_source_version_inser
 
   --Add derived column constraints
 
-DECLARE curDerCol CURSOR FOR  
-SELECT left_column_name, right_column_name
-FROM @DerivedColumnsList
-ORDER BY left_column_name
+--DECLARE curDerCol CURSOR FOR  
+--SELECT left_column_name, right_column_name
+--FROM @DerivedColumnsList
+--ORDER BY left_column_name
 
-OPEN curDerCol   
-FETCH NEXT FROM curDerCol INTO @DerColName, @DerColValue  
+--OPEN curDerCol   
+--FETCH NEXT FROM curDerCol INTO @DerColName, @DerColValue  
 
-WHILE @@FETCH_STATUS = 0   
-BEGIN 
+--WHILE @@FETCH_STATUS = 0   
+--BEGIN 
 
-SELECT @DerColKey = [column_key]
-      ,@DerColType = [column_type]
-	  ,@DerColLength = [column_length]
-	  ,@DerColPrecision = [column_precision]
-	  ,@DerColScale = [column_scale]
-	  ,@DerColCollation = [Collation_Name]
-	  ,@DerColOrdinalPos = [source_ordinal_position]
-FROM [$(ConfigDatabase)].[dbo].[dv_column]
-WHERE [column_key] IN (
-SELECT c.[column_key]
-FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
-inner join [$(ConfigDatabase)].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
-WHERE 1=1
-and st.source_table_key = @source_table_key
-and c.column_name = @DerColName
-)
+--SELECT @DerColKey = [column_key]
+--      ,@DerColType = [column_type]
+--	  ,@DerColLength = [column_length]
+--	  ,@DerColPrecision = [column_precision]
+--	  ,@DerColScale = [column_scale]
+--	  ,@DerColCollation = [Collation_Name]
+--	  ,@DerColOrdinalPos = [source_ordinal_position]
+--FROM [$(ConfigDatabase)].[dbo].[dv_column]
+--WHERE [column_key] IN (
+--SELECT c.[column_key]
+--FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
+--inner join [$(ConfigDatabase)].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+--WHERE 1=1
+--and st.source_table_key = @source_table_key
+--and c.column_name = @DerColName
+--)
 
-EXECUTE [$(ConfigDatabase)].[dbo].[dv_column_update]
-@column_key = @DerColKey
-,@table_key = @source_table_key
-,@satellite_col_key = NULL
-,@column_name = @DerColName
-,@column_type = @DerColType
-,@column_length = @DerColLength
-,@column_precision = @DerColPrecision
-,@column_scale = @DerColScale
-,@Collation_Name = @DerColCollation
-,@is_derived = 1
-,@derived_value = @DerColValue
-,@source_ordinal_position = @DerColOrdinalPos
-,@is_source_date = 0
-,@is_retired = 0
+--EXECUTE [$(ConfigDatabase)].[dbo].[dv_column_update]
+--@column_key = @DerColKey
+--,@table_key = @source_table_key
+--,@satellite_col_key = NULL
+--,@column_name = @DerColName
+--,@column_type = @DerColType
+--,@column_length = @DerColLength
+--,@column_precision = @DerColPrecision
+--,@column_scale = @DerColScale
+--,@Collation_Name = @DerColCollation
+--,@is_derived = 1
+--,@derived_value = @DerColValue
+--,@source_ordinal_position = @DerColOrdinalPos
+--,@is_source_date = 0
+--,@is_retired = 0
 
-FETCH NEXT FROM curDerCol INTO @DerColName, @DerColValue   
-END   
+--FETCH NEXT FROM curDerCol INTO @DerColName, @DerColValue   
+--END   
 
-CLOSE curDerCol   
-DEALLOCATE curDerCol
+--CLOSE curDerCol   
+--DEALLOCATE curDerCol
 
 SELECT 'Hook the Source Columns up to the Satellite:'
 EXECUTE [$(ConfigDatabase)].[dv_config].[dv_populate_satellite_columns] 
@@ -395,8 +399,12 @@ select  hub_key_column_key	= @hub_key_column_key
 END 
 CLOSE curLinkHub   
 DEALLOCATE curLinkHub
---
+---------------------------------------------------------------------
 SELECT 'Remove the Columns in the Exclude List from the Satellite:'
+
+ SELECT @StageTableKey = REPLACE(REPLACE(column_name, '[', ''), ']','') FROM [$(ConfigDatabase)].[dbo].[fn_get_key_definition] (@StageTable,'stg')
+ insert into @ExcludeColumns values (@StageTableKey)
+
 
 update [$(ConfigDatabase)].[dbo].[dv_column]
 set [satellite_col_key] = NULL
@@ -452,16 +460,16 @@ SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [dbo].[dv_create_link_table]
 UNION
 SELECT 'EXECUTE [dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
-SELECT 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y'''
-UNION
+--SELECT 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y'''
+--UNION
 SELECT 'EXECUTE [dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
 ,@vault_source_load_type = ''full'''
 UNION
-SELECT 'select top 1000 * from ' + quotename(link_database) + '.' + quotename(link_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (link_name, link_schema))
+SELECT 'select top 1000 * from ' + quotename(link_database) + '.' + quotename(link_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (link_name, 'lnk'))
 from [$(ConfigDatabase)].[dbo].[dv_link] where link_name = @LinkName
 UNION
-SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, satellite_schema))
+SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, 'sat'))
 from [$(ConfigDatabase)].[dbo].[dv_satellite] where satellite_name =  @SatelliteName
 --
 PRINT 'succeeded';

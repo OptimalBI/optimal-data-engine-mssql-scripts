@@ -20,23 +20,26 @@ Develop contains the latest, locally tested version of the codebase.
 ## Download and build instructions: ##
 If you wish to develop the code base further, we recommend that you use the Visual Studio solution which is provided.
 
-The Project contains a number of discrete scripts, which you can copy off the GitHub website, or from the project zip.
+The Project contains a number of discrete scripts and SSIS packages, which you can copy off the GitHub website, or from the project zip.
 
 ### Pre-requisites ###
 
 * Download a copy of the zip and extract to a temporary folder
 
-### Scripted Install ###
+### Installation ###
 
+"Helper" stored procedures:
 * Open SQL Server Management studio and load *ode_to_mssql_scripts_Create.sql* from the extracted zip file. You will find it in the *ReleaseScript* folder.
 * Within SQL Server Management Studio > Click Query Menu > SQLCMD Mode 
 * Within the script optionally change the ConfigDatabase to your ODE_Config database name, DatabaseName and DefaultFilePrefix to the preferred ODE scripts database name; default is *ode_to_mssql_scripts*. *ODE_Admin* is recommended. 
 * Click Execute from the toolbar. This should run successfully with a result of 'Update complete' on the Message panel
 
-### Ad Hoc Usage ###
+Release Management SSIS Project:
+* Refer to the Release Management project ReadMe file
 
-Scripts could be used on Ad Hoc basis without new database installation. Refer to folders *Configuration* and *Management* for Ad Hoc scripts.
- 
+ODE_Stage and ODE_Vault projects:
+* Don't require installation as such. They could be used as a template for the ODE Data Vault implementation
+
 ## Current functionality: ##
 Details of the current ODE functionality can be found here http://www.ode.ninja/category/features/
 These scripts are linked on a number of pages in http://www.ode.ninja/ , where there usage is dicussed in more detail.
@@ -44,7 +47,6 @@ These scripts are linked on a number of pages in http://www.ode.ninja/ , where t
 ## Notes ##
 * Untested on SQL Server editions prior to 2014. Installation script is compiled for SQL Server 2016.
 * Stored procedures have hidden settings for columnstore indexes and table compression flags. You may need to edit stored procedures in case these features are not available in your instance of SQL Server.
-* This product is still in Beta and should not be deployed to a production environment without thorough testing by you to ensure no adverse effects on your environment
 
 ## Feedback, suggestions, bugs, contributions: ##
 Please submit these to GitHub issue tracking or join us in developing by forking the project and then making a pull request!
@@ -54,9 +56,14 @@ Visit http://www.ode.ninja/ - this is where we keep our guides and share our kno
 
 ## Change log: ##
 ```
+Build 005.001.001 on 20170911
+	* Scripts are upgraded to run on ODE version 5.1
+	* Added scripts to create CDC satellite functions
+	* Added sample/template of Stage and Data Vault databases
 Build 004.001.001 on 20170301
-		* Scripts are upgraded to run on ODE version 4.1
-		* Some scripts are transformed to stored procedures to be stored in ODE admin database (not in core config)
+	* Scripts are upgraded to run on ODE version 4.1
+	* Some scripts are transformed to stored procedures to be stored in ODE admin database (not in core config)
+	* Added configuration release management SSIS package
 20160819 
-        * Initial Build.
+	* Initial Build.
 ```
