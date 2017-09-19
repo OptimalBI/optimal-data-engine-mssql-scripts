@@ -65,15 +65,12 @@
     <Folder Include="dbo" />
     <Folder Include="dbo\Stored Procedures\" />
     <Folder Include="dbo\User Defined Types\" />
-    <Folder Include="ReleaseScript" />
     <Folder Include="Admin\" />
     <Folder Include="Admin\Stored Procedures\" />
     <Folder Include="Security\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Configuration\Create_Missing_Vault_Objects.sql" />
     <None Include="Management\Back_Out_Release.sql" />
-    <None Include="Management\Version_Business_Rules.sql" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Stored Procedures\ODE_object_match_config.sql" />

@@ -1024,6 +1024,8 @@ SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [dbo].[dv_create_hub_table] 
 UNION
 SELECT 'EXECUTE [dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
+ SELECT CASE WHEN @StageLoadType IN ('ODEcdc' , 'MSSQLcdc') THEN 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''', ''Y''' END
+UNION
  SELECT CASE WHEN @StageSourceType = 'BespokeProc' THEN 'EXECUTE [dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
 ,@vault_source_load_type = ''full''' ELSE 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y''' END

@@ -1,4 +1,4 @@
-﻿# Optimal Data Engine (ODE) Scripts#
+﻿# Optimal Data Engine (ODE) Scripts #
 Copyright 2015 OptimalBI - Licensed under the GNU GENERAL PUBLIC LICENSE Version 3.0 (GPL-3.0)
 
 ## What Optimal Data Engine Scripts does: ##
@@ -28,11 +28,17 @@ The Project contains a number of discrete scripts and SSIS packages, which you c
 
 ### Installation ###
 
-"Helper" stored procedures:
+Admin database with "helper" stored procedures scripted installation:
 * Open SQL Server Management studio and load *ode_to_mssql_scripts_Create.sql* from the extracted zip file. You will find it in the *ReleaseScript* folder.
 * Within SQL Server Management Studio > Click Query Menu > SQLCMD Mode 
 * Within the script optionally change the ConfigDatabase to your ODE_Config database name, DatabaseName and DefaultFilePrefix to the preferred ODE scripts database name; default is *ode_to_mssql_scripts*. *ODE_Admin* is recommended. 
 * Click Execute from the toolbar. This should run successfully with a result of 'Update complete' on the Message panel
+
+Admin database installation via Visual Studio:
+* Open the solution in Visual Studio 2015
+* Right-click on the *ode_to_mssql_scripts* project in the Solution Explorer, choose "Publish"
+* Provide a server connection, desired database name and ODE_Config database name as a parameter.
+* Click Publish, this will create a database with "helper" scripts
 
 Release Management SSIS Project:
 * Refer to the Release Management project ReadMe file
