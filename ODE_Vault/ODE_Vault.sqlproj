@@ -67,5 +67,6 @@
     <Build Include="Security\Sat.sql" />
     <Build Include="Security\Hub.sql" />
     <Build Include="Security\Access.sql" />
+    <Build Include="Security\Lnk.sql" />
   </ItemGroup>
 </Project>

@@ -10,11 +10,16 @@ http://ode.ninja/configuration-release-management/
 
 Note that this package releases ODE configuration code only. Staging code is not promoted by this SSIS package and should be released separately.
 
-#Installation#
-
+## Installation ##
 Deploy SSIS project to the release target environment. E.g. if you are going to release ODE configuration from DEV to TEST server, deploy release project into the TEST SQL Server Intergation Services catalog. Also installation require SQL server login "ODERelease" to be created on the source environment. This login should have read and write access to the source ODE Config, because the release SSIS package could build (compile) release script and write it into the table.
 
 You can provide all the parameters manually when executing the package. However, we recommend using SSIS project environment for the best experience. Set up an environment for Full release and an environment for Partial release in the SQL Server Integration Services catalog. To achieve that, create an environment and add the following parameters in there.
+
+## Current functionality: ##
+Details of the current functionality can be found here http://ode.ninja/release-config-with-ssis-package/
+
+## Notes ##
+* SSIS package has been implemented in Visual Studio 2015.
 
 ##Full release environment##
 
@@ -95,3 +100,9 @@ Once configured, use one of these environments when executing the Release packag
 
 Right click on the package in the SQL Server Integration services catalog, choose "Execute". Select the environment from the drop-down list. This will populate most of the parameters with the predefined values. Provide the release number and release description in case if you are inserting the new header; or just the release number in case if the header exists already. Once execution has started, you will be suggested with monitoring the load via the execution report. Package execution shouldn't take long. Refresh the report if execution is still running. Once execution has succeeded, configuration is released to the target server. 
 In case of failure, follow the links on the report to open all messages report for the error message.
+
+## Feedback, suggestions, bugs, contributions: ##
+Please submit these to GitHub issue tracking or join us in developing by forking the project and then making a pull request!
+
+## Find out more: ##
+Visit http://ode.ninja/ - this is where we keep our guides and share our knowledge. To find out more about OptimalBI and the work we do visit http://www.optimalbi.com or check out our blogs at http://optimalbi.com/blog/tag/data-vault/ for all the latest on our Data Vault journey. If you want to get in touch, you can email us at hey@optimalbi.com

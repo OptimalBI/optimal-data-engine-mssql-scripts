@@ -91,8 +91,8 @@ Begin:
 
 -- Exclude the Hub Key from the Satellite if it is in Business Vault. Otherwise keep it.
 
-select 1 from [$(ConfigDatabase)] .[dbo].[dv_stage_database] sd
-inner join [$(ConfigDatabase)] .[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
+select 1 from [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
+inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema] ss on ss.[stage_database_key] = sd.[stage_database_key]
 where sd.[stage_database_name] = @StageDatabase
 and ss.[stage_schema_name] = @StageSchema
 if @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
@@ -158,13 +158,13 @@ select @ServerName = @@servername
 --   end
 --
 
-if @StageLoadType not in ('Full', 'Delta') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
+if @StageLoadType not in ('Full') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
 /********************************************
 Release:
 ********************************************/
 --'Find the Next Release for the Sprint'
 SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
-FROM [$(ConfigDatabase)] .[dv_release].[dv_release_master]
+FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
 WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @sprintdate
 ORDER BY 1 DESC
 IF @@rowcount = 0
@@ -174,7 +174,7 @@ SET @release_number = cast(@sprintdate + right('00' + cast(@seqint + 1 AS VARCHA
 SELECT @release_number
 SET @Description = 'Load Stage Table: ' + quotename(@StageTable) + ' into ' + quotename(@VaultName)
 -- Create the Release:
-EXECUTE  @release_key = [$(ConfigDatabase)] .[dv_release].[dv_release_master_insert]  @release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
+EXECUTE  @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert]  @release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
 																,@release_description	= @Description		-- what the release is for
 																,@reference_number		= @ReleaseReference
 																,@reference_source		= @ReleaseSource
@@ -186,7 +186,7 @@ select 'Configure the Hub:'
 
 if @SatelliteOnly = 'N'
 begin
-SELECT @abbn = [$(ConfigDatabase)] .[dbo].[fn_get_next_abbreviation]()
+SELECT @abbn = [$(ConfigDatabase)].[dbo].[fn_get_next_abbreviation]()
 EXECUTE @hub_key = [$(ConfigDatabase)] .[dbo].[dv_hub_insert] 
 				   @hub_name			= @HubName
 				  ,@hub_abbreviation	= @abbn
@@ -200,7 +200,7 @@ else
 begin
 select @hub_key			= [hub_key]
       ,@hub_database	= [hub_database]
-from [$(ConfigDatabase)] .[dbo].[dv_hub] 
+from [$(ConfigDatabase)].[dbo].[dv_hub] 
 where [hub_name] = @HubName
 if @hub_database <> @VaultName
 begin
@@ -235,19 +235,20 @@ Stage Table:
 select 'Get the necessary keys: '
 SELECT @StageDatabaseKey	= d.stage_database_key
       ,@StageSchemaKey		= s.stage_schema_key
-  FROM [$(ConfigDatabase)].[dbo].[dv_stage_database] d
-  inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema] s
+FROM [$(ConfigDatabase)].[dbo].[dv_stage_database] d
+INNER JOIN [$(ConfigDatabase)].[dbo].[dv_stage_schema] s
   on s.stage_database_key	= d.stage_database_key
-where d.stage_database_name = @StageDatabase
+WHERE d.stage_database_name = @StageDatabase
   and s.stage_schema_name	= @StageSchema
+
 SELECT @SourceSystemKey = [source_system_key]
 FROM [$(ConfigDatabase)].[dbo].[dv_source_system]
-where [source_system_name] = @SourceSystem
+WHERE [source_system_name] = @SourceSystem
 
 select 'Create The Stage Table itself:'
 EXECUTE @source_table_key	= [$(ConfigDatabase)].[dbo].[dv_source_table_insert] 
    @source_unique_name		= @StageTable
-  ,@source_type				= @StageSourceType
+  --,@source_type				= @StageSourceType
   ,@load_type				= @StageLoadType
   ,@system_key				= @SourceSystemKey
   ,@source_table_schema		= NULL
@@ -260,6 +261,7 @@ select ' Add a Current Source Version with a "Version" of'
 EXECUTE @source_version_key = [$(ConfigDatabase)].[dbo].[dv_source_version_insert] 
    @source_table_key		= @source_table_key
   ,@source_version			= 1
+  ,@source_type				= @StageSourceType
   ,@source_procedure_name   = @source_procedure_name
   ,@pass_load_type_to_proc	= @pass_load_type_to_proc
   ,@is_current				= 1
@@ -270,7 +272,7 @@ Left Right Match
 ********************************************/
 BEGIN
 select 'hook up the left right columns for matching'
-EXECUTE @match_key = [$(ConfigDatabase)] .[dbo].[dv_object_match_insert] 
+EXECUTE @match_key = [$(ConfigDatabase)].[dbo].[dv_object_match_insert] 
    @source_version_key = @source_version_key
   ,@temporal_pit_left = @MatchingTemporalPitLeft
   ,@temporal_pit_right = @MatchingTemporalPitRight
@@ -298,8 +300,8 @@ set @right_column_key			= NULL
 IF @MatchingLeftObjectType = 'hub'
 begin
 	select @left_hub_key_column_key = hub_key_column_key
-	from [$(ConfigDatabase)] .[dbo].[dv_hub] h
-	inner join [$(ConfigDatabase)] .[dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
+	from [$(ConfigDatabase)].[dbo].[dv_hub] h
+	inner join [$(ConfigDatabase)].[dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
 	where h.[hub_database]			= @MatchingLeftObjectDatabase
 	  and h.[hub_schema]			= @MatchingLeftObjectSchema
 	  and h.[hub_name]				= @MatchingLeftObjectName
@@ -309,8 +311,8 @@ end
 else IF @MatchingLeftObjectType = 'lnk'
 begin
 	select @left_link_key_column_key = link_key_column_key
-	from [$(ConfigDatabase)] .[dbo].[dv_link] l
-	inner join [$(ConfigDatabase)] .[dbo].[dv_link_key_column] lkc on lkc.link_key = l.link_key
+	from [$(ConfigDatabase)].[dbo].[dv_link] l
+	inner join [$(ConfigDatabase)].[dbo].[dv_link_key_column] lkc on lkc.link_key = l.link_key
 	where l.[link_database]			 = @MatchingLeftObjectDatabase
 	  and l.[link_schema]			 = @MatchingLeftObjectSchema
 	  and l.[link_name]				 = @MatchingLeftObjectName
@@ -321,8 +323,8 @@ else IF @MatchingLeftObjectType = 'sat'
 begin 
 
 	select @left_satellite_col_key = satellite_col_key
-	from [$(ConfigDatabase)] .[dbo].[dv_satellite] s
-	inner join [$(ConfigDatabase)] .[dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
+	from [$(ConfigDatabase)].[dbo].[dv_satellite] s
+	inner join [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
 	where s.[satellite_database]		 = @MatchingLeftObjectDatabase
 	  and s.[satellite_schema]			 = @MatchingLeftObjectSchema
 	  and s.[satellite_name]			 = @MatchingLeftObjectName
@@ -333,10 +335,10 @@ end
 else IF @MatchingLeftObjectType = 'stg'
 begin
 	select @left_column_key = column_key
-	from [$(ConfigDatabase)] .[dbo].[dv_source_table] st
-	inner join [$(ConfigDatabase)] .[dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
-	inner join [$(ConfigDatabase)] .[dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
-	inner join [$(ConfigDatabase)] .[dbo].[dv_column] c on c.table_key = st.source_table_key
+	from [$(ConfigDatabase)].[dbo].[dv_source_table] st
+	inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
+	inner join [$(ConfigDatabase)].[dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
+	inner join [$(ConfigDatabase)].[dbo].[dv_column] c on c.table_key = st.source_table_key
 	where sd.[stage_database_name]		 = @MatchingLeftObjectDatabase
 	  and ss.[stage_schema_name]		 = @MatchingLeftObjectSchema
 	  and st.[stage_table_name]			 = @MatchingLeftObjectName
@@ -349,8 +351,8 @@ else raiserror( 'Left Matching %s is not a valid Matching Object', 16, 1, @Match
 IF @MatchingrightObjectType = 'hub'
 begin
 	select @right_hub_key_column_key = hub_key_column_key
-	from [$(ConfigDatabase)] .[dbo].[dv_hub] h
-	inner join [$(ConfigDatabase)] .[dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
+	from [$(ConfigDatabase)].[dbo].[dv_hub] h
+	inner join [$(ConfigDatabase)].[dbo].[dv_hub_key_column] hkc on hkc.hub_key = h.hub_key
 	where h.[hub_database]			= @MatchingrightObjectDatabase
 	  and h.[hub_schema]			= @MatchingrightObjectSchema
 	  and h.[hub_name]				= @MatchingrightObjectName
@@ -360,7 +362,7 @@ end
 else IF @MatchingrightObjectType = 'lnk'
 begin
 	select @right_link_key_column_key = link_key_column_key
-	from [$(ConfigDatabase)] .[dbo].[dv_link] l
+	from [$(ConfigDatabase)].[dbo].[dv_link] l
 	inner join [$(ConfigDatabase)] .[dbo].[dv_link_key_column] lkc on lkc.link_key = l.link_key
 	where l.[link_database]			 = @MatchingrightObjectDatabase
 	  and l.[link_schema]			 = @MatchingrightObjectSchema
@@ -371,8 +373,8 @@ end
 else IF @MatchingrightObjectType = 'sat'
 begin
 	select @right_satellite_col_key = satellite_col_key
-	from [$(ConfigDatabase)] .[dbo].[dv_satellite] s
-	inner join [$(ConfigDatabase)] .[dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
+	from [$(ConfigDatabase)].[dbo].[dv_satellite] s
+	inner join [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc on sc.satellite_key = s.satellite_key
 	where s.[satellite_database]		 = @MatchingrightObjectDatabase
 	  and s.[satellite_schema]			 = @MatchingrightObjectSchema
 	  and s.[satellite_name]			 = @MatchingrightObjectName
@@ -382,10 +384,10 @@ end
 else IF @MatchingrightObjectType = 'stg'
 begin
 	select @right_column_key = column_key
-	from [$(ConfigDatabase)] .[dbo].[dv_source_table] st
-	inner join [$(ConfigDatabase)] .[dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
-	inner join [$(ConfigDatabase)] .[dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
-	inner join [$(ConfigDatabase)] .[dbo].[dv_column] c on c.table_key = st.source_table_key
+	from [$(ConfigDatabase)].[dbo].[dv_source_table] st
+	inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema] ss on ss.[stage_schema_key] = st.[stage_schema_key]
+	inner join [$(ConfigDatabase)].[dbo].[dv_stage_database] sd on sd.[stage_database_key] = ss.[stage_database_key]
+	inner join [$(ConfigDatabase)].[dbo].[dv_column] c on c.table_key = st.source_table_key
 	where sd.[stage_database_name]		 = @MatchingrightObjectDatabase
 	  and ss.[stage_schema_name]		 = @MatchingrightObjectSchema
 	  and st.[stage_table_name]			 = @MatchingrightObjectName
@@ -534,7 +536,7 @@ CLOSE curStageKey
 DEALLOCATE curStageKey
 --
 SELECT 'Hook the Source Columns up to the Satellite:'
-EXECUTE [$(ConfigDatabase)] .[dv_config].[dv_populate_satellite_columns] 
+EXECUTE [$(ConfigDatabase)].[dv_config].[dv_populate_satellite_columns] 
    @vault_source_unique_name	= @StageTable
   ,@vault_satellite_name		= @SatelliteName
   ,@vault_release_number		= @release_number
@@ -563,10 +565,10 @@ SELECT @hub_key_column_type			= 'varchar'	--[column_type]
 	  ,@hub_key_column_scale		= 0			--[column_scale]
 	  ,@hub_key_Collation_Name	    = null		--[Collation_Name]
       ,@hub_source_column_key		= [column_key]
-FROM [$(ConfigDatabase)] .[dbo].[dv_column] c
+FROM [$(ConfigDatabase)].[dbo].[dv_column] c
 WHERE [column_key] IN (
 SELECT c.[column_key]
-FROM [$(ConfigDatabase)] .[dbo].[dv_source_table] st 
+FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
 inner join [$(ConfigDatabase)] .[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
 WHERE 1=1
 and st.source_table_key = @source_table_key
@@ -578,8 +580,8 @@ SELECT *
 FROM [$(ConfigDatabase)] .[dbo].[dv_column] c
 WHERE [column_key] IN (
 SELECT c.[column_key]
-FROM [$(ConfigDatabase)] .[dbo].[dv_source_table] st 
-inner join [$(ConfigDatabase)] .[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
+inner join [$(ConfigDatabase)].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
 WHERE 1=1
 and st.source_table_key = @source_table_key
 )
@@ -598,7 +600,7 @@ begin
 		   ,@OrdinalPosition
 		   ,@release_number
 	
-	EXECUTE @hub_key_column_key = [$(ConfigDatabase)] .[dbo].[dv_hub_key_insert] 
+	EXECUTE @hub_key_column_key = [$(ConfigDatabase)].[dbo].[dv_hub_key_insert] 
 								 @hub_key					= @hub_key
 								,@hub_key_column_name		= @HubKeyName
 								,@hub_key_column_type		= @hub_key_column_type
@@ -612,7 +614,7 @@ end
 else
 begin
 	select @hub_key_column_key = [hub_key_column_key]
-	from [$(ConfigDatabase)] .[dbo].[dv_hub_key_column]
+	from [$(ConfigDatabase)].[dbo].[dv_hub_key_column]
 	where [hub_key] = @hub_key
 	and [hub_key_column_name] = @HubKeyName
 end
@@ -621,7 +623,7 @@ select  hub_key_column_key		 = @hub_key_column_key
 	   ,hub_source_column_key	 = @hub_source_column_key
 	   ,HubKeyName				 = @HubKeyName
 
-EXECUTE [$(ConfigDatabase)] .[dbo].[dv_hub_column_insert] 
+EXECUTE [$(ConfigDatabase)].[dbo].[dv_hub_column_insert] 
 	 @hub_key_column_key	= @hub_key_column_key
 	,@link_key_column_key	= NULL
 	,@column_key			= @hub_source_column_key
@@ -637,22 +639,22 @@ DEALLOCATE curHubKey
 Tidy Up:
 ********************************************/
 -- Remove the Columns in the Exclude List from the Satellite:
-update [$(ConfigDatabase)] .[dbo].[dv_column]
+update [$(ConfigDatabase)].[dbo].[dv_column]
 set [satellite_col_key] = NULL
 where [column_name] IN (
 SELECT *
 FROM @ExcludeColumns)
-and [column_key] in(select c.column_key from [$(ConfigDatabase)] .[dbo].[dv_column] c 
-                    inner join [$(ConfigDatabase)] .[dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
+and [column_key] in(select c.column_key from [$(ConfigDatabase)].[dbo].[dv_column] c 
+                    inner join [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
 					where sc.[satellite_key] = @satellite_key)
 
 -- If you don't want Keys in the satellites:
 	DELETE
-	FROM [$(ConfigDatabase)] .[dbo].[dv_satellite_column]
+	FROM [$(ConfigDatabase)].[dbo].[dv_satellite_column]
 	WHERE [satellite_col_key] IN (
 		select sc.[satellite_col_key]
-		from [$(ConfigDatabase)] .[dbo].[dv_satellite_column] sc
-		left join [$(ConfigDatabase)] .[dbo].[dv_column] c	on sc.[satellite_col_key] = c.[satellite_col_key]
+		from [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc
+		left join [$(ConfigDatabase)].[dbo].[dv_column] c	on sc.[satellite_col_key] = c.[satellite_col_key]
 		where c.[satellite_col_key] is null
 		  and sc.[satellite_key] = @satellite_key
 		  )
@@ -660,7 +662,7 @@ and [column_key] in(select c.column_key from [$(ConfigDatabase)] .[dbo].[dv_colu
 Scheduler:
 ********************************************/
 -- Add the Source the the required Schedule:
-EXECUTE [$(ConfigDatabase)] .[dv_scheduler].[dv_schedule_source_table_insert] 
+EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @ScheduleName
   ,@source_unique_name			= @StageTable
   ,@source_table_load_type		= 'Full'

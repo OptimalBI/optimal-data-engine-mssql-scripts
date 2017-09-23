@@ -17,18 +17,17 @@
 ,@StageSchema VARCHAR(128)			--= 'Stage'
 ,@StageTable VARCHAR(128)			--= 'Sale_Match_Test'
 ,@StageSourceType VARCHAR(50)		--= 'BespokeProc', 'ExternalStage', 'LeftRightComparison', 'SSISPackage'
-,@StageLoadType VARCHAR(50)         -- 'Full' or 'Delta'
+,@StageLoadType VARCHAR(50)         -- 'Full' , 'Delta', 'ODEcdc' or 'MSSQLcdc'
 ,@StagePassLoadTypeToProc BIT		= 0 -- 0 = Dont Pass it on, 1 = Pass Delta / Full to Proc - Only applicable to BespokeProc
 ,@SourceDataFilter NVARCHAR(MAX)	= NULL -- = 'RecordStatus = 1' - Only applicable to SSISPackage
 ,@HubName VARCHAR(128)				--= 'link_Sale_Match_Test'  --'Customer'--NULL -- to Default the Hub Name to the sat name - good for pure Raw Vault.
 	-- For completely Raw Hub Sat combinations, you can leave this column as null. The Script will create a Hub using the same name as the source table.
 	-- For Business hubs, specify the name of the Hub of the Ensemble, which you are adding to.
 ,@SatelliteName VARCHAR(128)		--= 'link_Sale_Match_Test'
-
 ,@VaultName VARCHAR(128)            --=  'ODE_Vault'
 	--the name of the vault where the Hub and Satellite will be created.
-,@FullScheduleName VARCHAR(128)		--=  'Full_Load'
-,@IncrementScheduleName VARCHAR(128) --= 'Increment_Load'
+,@FullScheduleName VARCHAR(128)		= NULL --=  'Full_Load' or leave NULL if job doesn't require to be scheduled
+,@IncrementScheduleName VARCHAR(128) = NULL --= 'Increment_Load' or leave NULL if job doesn't require to be scheduled
 	--the schedule the load is to run in. This schedule needs to exist prior to running this script.
 ,@HubKeyNames	[dbo].[dv_column_list] READONLY
 --declare @HubKeyNames table(HubKeyName VARCHAR(128)
@@ -39,10 +38,16 @@
 ----The name of the unique Key columns. The columns need to exist in your Stage Table, and should be appropriately named for the Hub, which you are building.
 -- List the Columns in the order in which you want them to appear in the Hub.
 ,@SourceSystemName              VARCHAR(128) = NULL
+-- The name of the source system as at the table dv_source_system. If the source system is new for this ensemble, it should be created manually first
 ,@SouceTableSchema				VARCHAR(128) = NULL
+-- The schema of the source table. In case of SSIS package source, this should be a schema of the source CDC function
 ,@SourceTableName				VARCHAR(128) = NULL
+-- The source table name. In case of SSIS package source, this should be the source CDC funtion base name, without "_all" suffix though
 ,@SSISPackageName				VARCHAR(128) = NULL
+-- Only required if source type is SSIS package
 ,@DerivedColumnsList [dbo].[dv_column_matching_list] READONLY
+-- The list of derived columns, i.e. columns that don't exist in source, but require to be created on the way to ODE.
+-- For example, a part of multi-part hub key that represents a source system.
 
 ) AS
 BEGIN
@@ -69,6 +74,11 @@ DECLARE
 	-- You can provide a name here to cause the Business key to be excluded from the Sat, in a specific Vault.
 DECLARE @ExcludeColumns TABLE (ColumnName VARCHAR(128))
 INSERT @ExcludeColumns  VALUES ('dv_stage_datetime')
+								, ('dv_stage_date_time')
+								, ('dv_source_version_key')
+								, ('dv_cdc_action')
+								, ('dv_cdc_high_water_date')
+								, ('dv_cdc_start_date')
 	--Insert columns which should never be included in the satellites.
 --print 'begin'
 /********************************************
@@ -128,6 +138,7 @@ DECLARE
 ,@DerColCollation				NVARCHAR(128)
 ,@DerColOrdinalPos				INT
 ,@OrdinalPosition				INT
+,@StageTableKey					varchar(128)
 ,@source_procedure_name         varchar(128) = case when @StageSourceType = 'BespokeProc' then 'usp_' + @StageTable 
 												WHEN @StageSourceType = 'SSISPackage' THEN @SSISPackageName else NULL end
 ,@pass_load_type_to_proc		BIT = case when @StageSourceType = 'BespokeProc' then @StagePassLoadTypeToProc else 0 end
@@ -402,6 +413,9 @@ DEALLOCATE curHubKey
 /********************************************
 Tidy Up:
 ********************************************/
+ SELECT @StageTableKey = REPLACE(REPLACE(column_name, '[', ''), ']','') FROM [$(ConfigDatabase)].[dbo].[fn_get_key_definition] (@StageTable,'stg')
+ insert into @ExcludeColumns values (@StageTableKey)
+
 -- Remove the Columns in the Exclude List from the Satellite:
 update [$(ConfigDatabase)].[dbo].[dv_column]
 set [satellite_col_key] = NULL
@@ -425,6 +439,7 @@ and [column_key] in (select c.column_key from [$(ConfigDatabase)].[dbo].[dv_colu
 /********************************************
 Scheduler:
 ********************************************/
+IF @FullScheduleName IS NOT NULL
 -- Add the Source the the required Full Schedule:
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @FullScheduleName
@@ -434,6 +449,7 @@ EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert]
   ,@queue						= 'Agent001'
   ,@release_number				= @release_number
 --
+IF @IncrementScheduleName IS NOT NULL
 -- Add the Source the the required Increment Schedule:
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @IncrementScheduleName
@@ -450,20 +466,18 @@ SELECT case when @SatelliteOnly = 'N' then 'EXECUTE ' + [$(ConfigDatabase)] + '.
 UNION
 SELECT 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
-SELECT 'EXECUTE ' + [$(ConfigDatabase)] + '.[dbo].[dv_load_source_table]
+ SELECT CASE WHEN @StageLoadType IN ('ODEcdc' , 'MSSQLcdc') THEN 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''', ''Y''' END
+UNION
+ SELECT CASE WHEN @StageSourceType = 'BespokeProc' THEN 'EXECUTE [dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
-,@vault_source_load_type = ''full'''
+,@vault_source_load_type = ''full''' ELSE 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y''' END
 UNION
-SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, @hub_schema))
-from [$(ConfigDatabase)] .[dbo].[dv_hub] where hub_name = @HubName
+SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, 'hub'))
+from [$(ConfigDatabase)].[dbo].[dv_hub] where hub_name = @HubName
 UNION
-SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, @sat_schema))
-from [$(ConfigDatabase)] .[dbo].[dv_satellite] where satellite_name =  @SatelliteName
---UNION
---SELECT 'EXECUTE [ODE_Admin].[Admin].[ODE_Create_Data_Access_Functions_All_Single] ''' + @VaultName + ''',''' + @SatelliteName + ''
---UNION
---SELECT 'EXECUTE [ODE_Admin].[Admin].[ODE_Create_Data_Access_Functions_PIT_Single] ''' + @VaultName + ''',''' + @SatelliteName + ''
---
+SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, 'sat'))
+from [$(ConfigDatabase)].[dbo].[dv_satellite] where satellite_name =  @SatelliteName
+
 PRINT 'succeeded';
 -- Commit if successful:
 COMMIT;
