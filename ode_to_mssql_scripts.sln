@@ -11,6 +11,8 @@ Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ODE_Stage", "ODE_Stage\ODE_
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ODE_Vault", "ODE_Vault\ODE_Vault.sqlproj", "{CE91FCD8-59CC-45DD-AA7E-C177286B0AC6}"
 EndProject
+Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "Admin_SSIS", "Admin_SSIS\Admin_SSIS.dtproj", "{56671743-47E6-4FFB-9FFB-FA2D370AC79A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,12 @@ Global
 		{CE91FCD8-59CC-45DD-AA7E-C177286B0AC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE91FCD8-59CC-45DD-AA7E-C177286B0AC6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CE91FCD8-59CC-45DD-AA7E-C177286B0AC6}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Debug|Any CPU.ActiveCfg = Development
+		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Debug|Any CPU.Build.0 = Development
+		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Development|Any CPU.ActiveCfg = Development
+		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Development|Any CPU.Build.0 = Development
+		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Release|Any CPU.ActiveCfg = Development
+		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Release|Any CPU.Build.0 = Development
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
