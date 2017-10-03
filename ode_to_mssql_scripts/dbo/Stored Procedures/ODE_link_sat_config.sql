@@ -467,10 +467,10 @@ SELECT 'EXECUTE [dbo].[dv_load_source_table]
 ,@vault_source_load_type = ''full'''
 UNION
 SELECT 'select top 1000 * from ' + quotename(link_database) + '.' + quotename(link_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (link_name, 'lnk'))
-from [$(ConfigDatabase)].[dbo].[dv_link] where link_name = @LinkName
+from [$(ConfigDatabase)].[dbo].[dv_link] where link_name = @LinkName AND link_database = @VaultName
 UNION
 SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (satellite_name, 'sat'))
-from [$(ConfigDatabase)].[dbo].[dv_satellite] where satellite_name =  @SatelliteName
+from [$(ConfigDatabase)].[dbo].[dv_satellite] where satellite_name =  @SatelliteName AND satellite_database = @VaultName
 --
 PRINT 'succeeded';
 -- Commit if successful:
