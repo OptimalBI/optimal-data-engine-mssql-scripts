@@ -447,7 +447,10 @@ IF @IncrementScheduleName IS NOT NULL
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert] 
    @schedule_name				= @IncrementScheduleName
   ,@source_unique_name			= @StageTable
-  ,@source_table_load_type		= 'Delta'
+  ,@source_table_load_type		= 'Full' 
+  -- Full load here as switching link to load in portions not a good idea due to the nature of the link: 
+  --it allows many-to-many relationships and in case of change it won't retire the previous relationship 
+  --unless some extra logic is implemented. Feel free to change it back to Delta in case if you have implemented thi logic in your custom stored proc
   ,@priority					= 'Low'
   ,@queue						= 'Agent001'
   ,@release_number				= @release_number
