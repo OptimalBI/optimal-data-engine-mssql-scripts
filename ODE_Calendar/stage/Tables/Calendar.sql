@@ -1,0 +1,25 @@
+﻿CREATE TABLE [stage].[Calendar] (
+    [dv_stage_date_time]     DATETIMEOFFSET (7) NULL,
+    [DateKey]                DATE               NULL,
+    [DateFullName]           VARCHAR (50)       NULL,
+    [FullDateAlternateKey]   DATE               NULL,
+    [YearCode]               INT                NULL,
+    [YearDescription]        NVARCHAR (50)      NULL,
+    [QuarterCode]            INT                NULL,
+    [QuarterDescription]     NVARCHAR (50)      NULL,
+    [QuarterYearCode]        INT                NULL,
+    [MonthNumberOfYearCode]  INT                NULL,
+    [MonthYearCode]          INT                NULL,
+    [MonthName]              NVARCHAR (30)      NULL,
+    [MonthYearDescription]   NVARCHAR (100)     NULL,
+    [MonthLocalisedString]   VARCHAR (50)       NULL,
+    [DateLocalisedString]    VARCHAR (50)       NULL,
+    [DayNumberOfMonth]       INT                NULL,
+    [NumberOfDaysInTheMonth] INT                NULL,
+    [DayNumberOfYear]        INT                NULL,
+    [WeekDay]                INT                NULL,
+    [WeekDayName]            NVARCHAR (30)      NULL,
+    [IsWeekDayCode]          INT                NULL,
+    [IsWeekDayDescription]   VARCHAR (10)       NULL
+);
+

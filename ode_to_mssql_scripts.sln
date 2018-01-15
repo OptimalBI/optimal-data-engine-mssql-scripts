@@ -13,6 +13,8 @@ Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ODE_Vault", "ODE_Vault\ODE_
 EndProject
 Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "Admin_SSIS", "Admin_SSIS\Admin_SSIS.dtproj", "{56671743-47E6-4FFB-9FFB-FA2D370AC79A}"
 EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ODE_Calendar", "ODE_Calendar\ODE_Calendar.sqlproj", "{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,15 @@ Global
 		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Development|Any CPU.Build.0 = Development
 		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Release|Any CPU.ActiveCfg = Development
 		{56671743-47E6-4FFB-9FFB-FA2D370AC79A}.Release|Any CPU.Build.0 = Development
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Development|Any CPU.Deploy.0 = Debug|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{657DAB21-B9CE-4CBB-982B-0FF0BA1544BC}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
