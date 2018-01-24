@@ -1,4 +1,4 @@
-#ODE Admin SSIS project#
+# ODE Admin SSIS project #
 
 ODE SSIS Admin project is a set of SSIS packages for perform administration tasks for ODE instance. 
 At the moment project consists of two packages.

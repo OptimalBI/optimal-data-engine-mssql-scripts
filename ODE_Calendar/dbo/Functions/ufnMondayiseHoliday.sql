@@ -9,6 +9,7 @@
 	WHO					DATE			DESCRIPTION
 	--------------		---------------	-----------------------------------------------------------------------------------------------
 	Jonathan Sellar		8 JULY 2015		Initial
+	Kate Loguteva		24 JAN 2018     Added second check for double holidays
 
 */
 
@@ -34,7 +35,10 @@ BEGIN
 	/* Check for double holidays - New Years and Christmas */
 	IF (DATEPART(D, @HolidayDate) = 1 AND DATEPART(M, @HolidayDate) = 1 AND DATEPART(D, @MondayisedHoliday) = 2) SET @MondayisedHoliday = DATEADD(D, 1, @MondayisedHoliday)
 	IF (DATEPART(D, @HolidayDate) = 25 AND DATEPART(M, @HolidayDate) = 12 AND DATEPART(D, @MondayisedHoliday) = 26) SET @MondayisedHoliday = DATEADD(D, 1, @MondayisedHoliday)
-
+	
+	/* Second check for double holidays - Day after New Year and Boxing day */
+	IF (DATEPART(D, @HolidayDate) = 2 AND DATEPART(M, @HolidayDate) = 1 AND DATEPART(D, @MondayisedHoliday) = 3) SET @MondayisedHoliday = DATEADD(D, 1, @MondayisedHoliday)
+	IF (DATEPART(D, @HolidayDate) = 26 AND DATEPART(M, @HolidayDate) = 12 AND DATEPART(D, @MondayisedHoliday) = 27) SET @MondayisedHoliday = DATEADD(D, 1, @MondayisedHoliday)
 
 	RETURN 	@MondayisedHoliday
 
