@@ -2,7 +2,7 @@
 Copyright 2015 OptimalBI - Licensed under the GNU GENERAL PUBLIC LICENSE Version 3.0 (GPL-3.0)
 
 ## What Optimal Data Engine Scripts does: ##
-This project contains a collection of scripts, which you are free to use, at your own risk, to make working with ODE Configuration easier and more standard.
+This solution contains a collection of scripts and SSIS packages, which you are free to use, at your own risk, to make working with ODE Configuration easier and more standard.
 
 ## Requirements (All users): ##
 It is assumed that you have an ODE installation as these scripts all relate to ODE configuration.
@@ -43,6 +43,9 @@ Admin database installation via Visual Studio:
 Release Management SSIS Project:
 * Refer to the Release Management project ReadMe file
 
+ODE_Calendar project:
+* Refer to the ODE_Calendar project ReadMe file
+
 ODE_Stage and ODE_Vault projects:
 * Don't require installation as such. They could be used as a template for the ODE Data Vault implementation
 
@@ -62,6 +65,8 @@ Visit http://www.ode.ninja/ - this is where we keep our guides and share our kno
 
 ## Change log: ##
 ```
+Build 005.002.001 on 20180124
+	* Added ODE Calendar
 Build 005.001.001 on 20170911
 	* Scripts are upgraded to run on ODE version 5.1
 	* Added scripts to create CDC satellite functions
