@@ -50,8 +50,9 @@ PRINT N'Creating [Stage]...';
 GO
 
 if schema_id('Stage') is null
-CREATE SCHEMA [Stage]
-    AUTHORIZATION [dbo];
+BEGIN
+    EXEC ('CREATE SCHEMA [Stage] AUTHORIZATION [dbo]');
+END
 
 
 GO
