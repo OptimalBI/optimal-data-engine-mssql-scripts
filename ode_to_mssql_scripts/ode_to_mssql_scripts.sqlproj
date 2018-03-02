@@ -68,9 +68,15 @@
     <Folder Include="Admin\" />
     <Folder Include="Admin\Stored Procedures\" />
     <Folder Include="Security\" />
+    <Folder Include="dbo\Functions" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Management\Back_Out_Release.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Get_Metadata_For_Source_Table_Single.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Get_Metadata_For_Source_Table_List.sql" />
+    <Build Include="dbo\User Defined Types\dv_column_type.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Cancel_Schedule.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Stop_Running_Schedule.sql" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Stored Procedures\ODE_object_match_config.sql" />
@@ -84,6 +90,12 @@
     <Build Include="Admin\Stored Procedures\ODE_Create_Data_Access_Functions_All_Single.sql" />
     <Build Include="Admin\Stored Procedures\ODE_Build_Vault_Object_Create_Statements.sql" />
     <Build Include="Security\Admin.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Build_Objects_For_New_Source.sql" />
+    <Build Include="dbo\User Defined Types\dv_table_list.sql" />
+    <Build Include="dbo\Functions\fn_get_MSSQL_metadata_source_statement.sql" />
+    <Build Include="dbo\Functions\fn_get_Oracle_metadata_source_statement.sql" />
+    <Build Include="dbo\Functions\fn_map_Oracle_to_SQLServer_DataType.sql" />
+    <Build Include="dbo\Stored Procedures\ODE_populate_source_table_columns.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="ConfigDatabase">

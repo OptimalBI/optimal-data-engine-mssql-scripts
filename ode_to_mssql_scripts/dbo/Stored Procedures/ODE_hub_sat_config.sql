@@ -462,15 +462,15 @@ EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert]
 Useful Commands:
 ********************************************/
 --Output commands to Build the Tables and test the Load:
-SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [dbo].[dv_create_hub_table] ''' + @VaultName + ''',''' + @HubName + ''',''N''' else '' end
+SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_hub_table] ''' + @VaultName + ''',''' + @HubName + ''',''N''' else '' end
 UNION
-SELECT 'EXECUTE [dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
+SELECT 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
- SELECT CASE WHEN @StageLoadType IN ('ODEcdc' , 'MSSQLcdc') THEN 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''', ''Y''' END
+ SELECT CASE WHEN @StageLoadType IN ('ODEcdc' , 'MSSQLcdc') THEN 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_stage_table] ''' + @StageTable + ''', ''Y''' END
 UNION
- SELECT CASE WHEN @StageSourceType = 'BespokeProc' THEN 'EXECUTE [dbo].[dv_load_source_table]
+ SELECT CASE WHEN @StageSourceType = 'BespokeProc' THEN 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
-,@vault_source_load_type = ''full''' ELSE 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y''' END
+,@vault_source_load_type = ''full''' ELSE 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y''' END
 UNION
 SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, 'hub'))
 from [$(ConfigDatabase)].[dbo].[dv_hub] where hub_name = @HubName AND hub_database = @VaultName

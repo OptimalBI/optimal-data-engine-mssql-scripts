@@ -459,13 +459,13 @@ EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_source_table_insert]
 Useful Commands:
 ********************************************/
 --Output commands to Build the Tables and test the Load:
-SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [dbo].[dv_create_link_table] ''' + @VaultName + ''',''' + @LinkName + ''',''N''' else '' end
+SELECT case when @SatelliteOnly = 'N' then 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_link_table] ''' + @VaultName + ''',''' + @LinkName + ''',''N''' else '' end
 UNION
-SELECT 'EXECUTE [dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
+SELECT 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_sat_table] ''' + @VaultName + ''',''' + @SatelliteName + ''',''N'''
 UNION
 --SELECT 'EXECUTE [dbo].[dv_create_stage_table] ''' + @StageTable + ''',''Y'''
 --UNION
-SELECT 'EXECUTE [dbo].[dv_load_source_table]
+SELECT 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_load_source_table]
  @vault_source_unique_name = ''' + @StageTable + '''
 ,@vault_source_load_type = ''full'''
 UNION
