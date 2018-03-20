@@ -1,9 +1,9 @@
 ﻿CREATE PROCEDURE [Admin].[ODE_Cancel_Schedule]
 (
 	 @ScheduleName				VARCHAR(256) -- Name of the schedule to be cancelled
-	,@pSprintDate				VARCHAR(50) -- Date of the sprint start. It is required for the new release number generation, format is YYYYMMDD, e.g. '20171031'
+	,@SprintDate				VARCHAR(50) -- Date of the sprint start. It is required for the new release number generation, format is YYYYMMDD, e.g. '20171031'
 	,@pReferenceNumber			VARCHAR(50) -- User Story and/or Task numbers, e.g. 'ODE-33'
-	,@pReferenceSource			VARCHAR(50) = 'Jira' -- system the reference number refers to, e.g. Rally
+	,@pReferenceSource			VARCHAR(50)  -- system the reference number refers to, e.g. Rally
 
 ) AS
 /** Cancel Schedule **/
@@ -25,7 +25,8 @@ Begin:
 ********************************************/
 -- Defaults:
 DECLARE
-	 @vReleaseNumber			INT
+	 @ReleaseNumber				INT
+	,@seqint					INT
 	,@vReleaseDesc				VARCHAR(256)
 	,@vOldReleaseKey			INT
 	,@vNewReleaseKey			INT 
@@ -38,8 +39,14 @@ DECLARE
 	,@vPriority					VARCHAR(50)
 	,@vQueue					VARCHAR(50)
 
-select @vReleaseNumber = ISNULL((MAX([dv_release_master].release_number) + 1), CAST((@pSprintDate + '01') AS INT)) FROM [$(ConfigDatabase)].[dv_release].[dv_release_master] WHERE CAST([dv_release_master].release_number as VARCHAR) like (@pSprintDate + '%')
-
+SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
+FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
+WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @SprintDate
+ORDER BY 1 DESC
+IF @@rowcount = 0
+SET @ReleaseNumber = cast(@SprintDate + '01' AS INT)
+ELSE
+SET @ReleaseNumber = cast(@SprintDate + right('00' + cast(@seqint + 1 AS VARCHAR(100)), 2) AS INT)
 	
 SELECT 
 	 @ScheduleKey			= [dv_schedule].schedule_key
@@ -51,7 +58,7 @@ FROM [$(ConfigDatabase)].[dv_scheduler].[dv_schedule] WHERE [dv_schedule].schedu
 
 /** Create new release for cancelled schedule **/
 EXECUTE @vNewReleaseKey = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert] 
-   @release_number			= @vReleaseNumber -- 2017103100
+   @release_number			= @ReleaseNumber -- 2017103100
   ,@release_description		= @vReleaseDesc -- Cancel schedule TestResult_Full
   ,@reference_number	    = @pReferenceNumber --JJ-1400
   ,@reference_source	    = @pReferenceSource--'Jira'

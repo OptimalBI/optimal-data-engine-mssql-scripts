@@ -60,7 +60,6 @@
   <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
     <Folder Include="Properties" />
-    <Folder Include="Configuration" />
     <Folder Include="Management" />
     <Folder Include="dbo" />
     <Folder Include="dbo\Stored Procedures\" />
@@ -90,12 +89,14 @@
     <Build Include="Admin\Stored Procedures\ODE_Create_Data_Access_Functions_All_Single.sql" />
     <Build Include="Admin\Stored Procedures\ODE_Build_Vault_Object_Create_Statements.sql" />
     <Build Include="Security\Admin.sql" />
-    <Build Include="Admin\Stored Procedures\ODE_Build_Objects_For_New_Source.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Configure_Objects_For_New_Source.sql" />
     <Build Include="dbo\User Defined Types\dv_table_list.sql" />
     <Build Include="dbo\Functions\fn_get_MSSQL_metadata_source_statement.sql" />
     <Build Include="dbo\Functions\fn_get_Oracle_metadata_source_statement.sql" />
     <Build Include="dbo\Functions\fn_map_Oracle_to_SQLServer_DataType.sql" />
     <Build Include="dbo\Stored Procedures\ODE_populate_source_table_columns.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Get_List_Of_Tables_From_Source.sql" />
+    <Build Include="Management\Query Builder.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="ConfigDatabase">

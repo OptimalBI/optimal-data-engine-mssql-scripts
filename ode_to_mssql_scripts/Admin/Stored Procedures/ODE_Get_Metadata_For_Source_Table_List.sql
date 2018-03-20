@@ -2,23 +2,17 @@
 CREATE PROCEDURE [Admin].[ODE_Get_Metadata_For_Source_Table_List]
 (
  @KeyDetectionType				VARCHAR(20)			= 'Primary' --Valid values are Primary, Unique, None
- 
 ,@SourceSystemName              VARCHAR(128) 
 ,@SourceSchema					VARCHAR(128)			
 ,@SourceTables					[dbo].[dv_table_list] READONLY			
-
 ,@StageDatabase					VARCHAR(128)		--= e.g. 'ODE_Sales_Stage'
 ,@StageSchema					VARCHAR(128)		--= 'Stage'
 ,@StageLoadType					VARCHAR(50)         --= 'Full' or 'Delta' or 'MSSQLcdc' or 'ODEcdc'
-
 ,@VaultDatabase					VARCHAR(128)        --= e.g. 'ODE_Sales_Vault'
-
-,@PrintCreateStatements			BIT		= 0			--0 means don't output the statements, 1 means output the create statements
 ,@SprintDate					CHAR(8)				--= '20170116'
-,@Description					VARCHAR(256)		-- what the release is for
 ,@ReleaseReference				VARCHAR(50)
 ,@ReleaseSource					VARCHAR(50)
-
+,@PrintCreateStatements			BIT		= 0			--0 means don't output the statements, 1 means output the create statements
 ) AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -32,35 +26,36 @@ BEGIN
 	  @seqint						INT
 	 ,@sprint_date					CHAR(8)	
 	 ,@release_number				INT
-	 ,@StageTable					VARCHAR(128)		--= 'link_Sale_Match_Test'
 	 ,@TableName					VARCHAR(128)
 	 ,@ordinal_position				INT
+	 ,@Description					VARCHAR(256)		-- what the release is for
 	 
     -- Insert statements for procedure here
 --BEGIN TRANSACTION
-	/********************************************
-	Release:
-	********************************************/
-	--'Find the Next Release for the Sprint'
-	SELECT @sprint_date =  CASE WHEN ISNULL(@SprintDate, '') = '' 
-								THEN convert(char(8), getdate(),112)
-								ELSE @SprintDate
-						   END
-	SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
-	FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
-	WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @sprint_date
-	ORDER BY 1 DESC
-	IF @@rowcount = 0
-	SET @release_number = cast(@sprint_date + '01' AS INT)
-	ELSE
-	SET @release_number = cast(@sprint_date + right('00' + cast(@seqint + 1 AS VARCHAR(100)), 2) AS INT)
-	SELECT @release_number
-	SET @Description = 'Load Stage Table: ' + quotename(@StageTable) + ' into ' + quotename(@VaultDatabase)
-	-- Create the Release:
-	EXECUTE  @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert]  @release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
-																	,@release_description	= @Description		-- what the release is for
-																	,@reference_number		= @ReleaseReference
-																	,@reference_source		= @ReleaseSource
+/********************************************
+Release:
+********************************************/
+--'Find the Next Release for the Sprint'
+SELECT @sprint_date =  CASE WHEN ISNULL(@SprintDate, '') = '' 
+							THEN convert(char(8), getdate(),112)
+							ELSE @SprintDate
+						END
+SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
+FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
+WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @sprint_date
+ORDER BY 1 DESC
+IF @@rowcount = 0
+SET @release_number = cast(@sprint_date + '01' AS INT)
+ELSE
+SET @release_number = cast(@sprint_date + right('00' + cast(@seqint + 1 AS VARCHAR(100)), 2) AS INT)
+SELECT @release_number
+SET @Description = 'Load metadata for tables from schema : ' + quotename(@StageSchema) + ' of the data source ' + quotename(@SourceSystemName)
+-- Create the Release:
+EXECUTE  @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert]  
+@release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
+,@release_description	= @Description		-- what the release is for
+,@reference_number		= @ReleaseReference
+,@reference_source		= @ReleaseSource
 	
 /********************************************
 Scheduler:
@@ -86,12 +81,12 @@ EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_insert]
 	,@release_number			= @release_number
   
 	
-	/* Loop through the Table List */
-	DECLARE curTable CURSOR FOR  
-	SELECT table_name, max(ordinal_position) as ordinal_position
-	FROM @SourceTables
-	GROUP BY table_name
-	ORDER BY ordinal_position
+/* Loop through the Table List */
+DECLARE curTable CURSOR FOR  
+SELECT table_name, max(ordinal_position) as ordinal_position
+FROM @SourceTables
+GROUP BY table_name
+ORDER BY ordinal_position
 
 	OPEN curTable   
 	FETCH NEXT FROM curTable INTO @TableName, @ordinal_position  

@@ -3,22 +3,16 @@ CREATE PROCEDURE [Admin].[ODE_Get_Metadata_For_Source_Table_Single]
 --
 (
  @release_key					INT			= 0
-
-,@KeyDetectionType				VARCHAR(20) = 'Primary' --Valid values are Primary or Unique
-
+ ,@KeyDetectionType				VARCHAR(20) = 'Primary' --Valid values are Primary or Unique
 ,@SourceSystemName              VARCHAR(128) 
 ,@SourceSchema					VARCHAR(128)			
 ,@SourceTable					VARCHAR(128)			
-
 ,@StageDatabase					VARCHAR(128)		--= e.g. 'ODE_Sales_Stage'
 ,@StageSchema					VARCHAR(128)		--= 'Stage'
 ,@StageLoadType					VARCHAR(50)         --= 'Full' or 'Delta'
-
 ,@VaultDatabase					VARCHAR(128)        --= e.g. 'ODE_Sales_Vault'
-
 ,@ScheduleFullName				VARCHAR(128)
 ,@ScheduleDeltaName				VARCHAR(128)
-
 ,@PrintCreateStatements			BIT		= 0			--0 means don't output the statements, 1 means output the create statements
 	--the schedule the load is to run in. This schedule needs to exist prior to running this script.
 
@@ -98,16 +92,19 @@ Validation:
 --   raiserror( 'This Process may only be run in the Development environment!!', 16, 1)
 --   end
 --
-if @KeyDetectionType not in ('Primary','Unique','None') raiserror( 'Invalid Key Detection Type (%s) Provided', 16, 1, @KeyDetectionType)
-select @release_number = [release_number] from [$(ConfigDatabase)].[dv_release].[dv_release_master] WHERE [release_key] = @release_key
-if @@ROWCOUNT <> 1 raiserror( 'Release key %i does not exist', 16, 1, @release_key)
+IF @KeyDetectionType NOT IN ('Primary','Unique','None') raiserror( 'Invalid Key Detection Type (%s) Provided', 16, 1, @KeyDetectionType)
+SELECT @release_number = [release_number] 
+FROM [$(ConfigDatabase)].[dv_release].[dv_release_master] 
+WHERE [release_key] = @release_key
+IF @@ROWCOUNT <> 1 raiserror( 'Release key %i does not exist', 16, 1, @release_key)
 
-select 1 from [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
-inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema] ss on ss.[stage_database_key] = sd.[stage_database_key]
-where sd.[stage_database_name] = @StageDatabase
-and ss.[stage_schema_name] = @StageSchema
-if @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
-if @StageLoadType not in ('Full', 'Delta', 'MSSQLcdc') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
+SELECT 1 FROM [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
+INNER JOIN [$(ConfigDatabase)].[dbo].[dv_stage_schema] ss ON ss.[stage_database_key] = sd.[stage_database_key]
+WHERE sd.[stage_database_name] = @StageDatabase
+AND ss.[stage_schema_name] = @StageSchema
+IF @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
+
+IF @StageLoadType NOT IN ('Full', 'Delta', 'MSSQLcdc') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
 --if @VaultName =  @BusinessVaultName
 --INSERT @ExcludeColumns select column_name from @HubKeyNames
 SELECT @LinkedServer = ss.[source_system_name] 
@@ -117,7 +114,7 @@ SELECT @LinkedServer = ss.[source_system_name]
 FROM [$(ConfigDatabase)].[dbo].[dv_source_system] ss
 LEFT JOIN [$(ConfigDatabase)].[dbo].[dv_connection] c
 ON ss.project_connection_name = c.connection_name
-where ss.[source_system_name] = @SourceSystemName
+WHERE ss.[source_system_name] = @SourceSystemName
 if @@ROWCOUNT <> 1 raiserror( 'Source System %s does not exist', 16, 1, @SourceSystemName)
 
 SELECT @stage_schema_key = s.[stage_schema_key]
@@ -127,23 +124,17 @@ WHERE d.[stage_database_name] = @StageDatabase AND s.[stage_schema_name] = @Stag
 if @@ROWCOUNT <> 1 raiserror( 'Stage Schema %s.%s does not exist', 16, 1, @StageSchema, @StageDatabase)
 
 /*
-  At this point we have removed hard-coded meta data queries from this stored procedure in favour of 
-  using reference scripts which are dependent on the identified database source system.
-
   Currently we are only differentiating between MSSQL (Microsoft SQL Server) and Oracle. Should this
   list of source systems be added to, then it may be worthwhile breaking this logic out to a collection
   of reference tables.
-
--- Some point prior to this we will be attempting to determine the source type of database
--- At the moment I'm going to hard-code in testing values.*/
+*/
 
 -- IF statement based on database type
 IF (@conn_type = 'MSSQLServer')
 BEGIN
-	-- This is the standard approach, in which we do not need to modify any of the field databtypes
-	
-	-- This is a generic open query statement against our defined source
+	-- This is the standard approach, in which we do not need to modify any of the field datatypes
 
+	-- This is a generic open query statement against our defined source
 	SET @OPENQUERY = 'SELECT * FROM OPENQUERY('+ @LinkedServer + ','''
 
 	-- Now we go off and get the MSSQL form of the metadata query for the hub key fields (this can be Primary or Unique)
@@ -152,7 +143,7 @@ BEGIN
 	-- Now we close out the statement ready for it's eventual execution.
 	SET @SQL = @OPENQUERY + @SQL + ''')'
 	
-	PRINT @SQL
+--	PRINT @SQL
 END
 ELSE IF (@conn_type = 'Oracle') 
 BEGIN 
@@ -181,18 +172,17 @@ BEGIN
 	-- Now we go off and get the Oracle form of the metadata query for the hub key fields (this can be Primary or Unique)
 	SET @SQL = [dbo].[fn_get_Oracle_metadata_source_statement](@source_database_name, @SourceSchema, @SourceTable, 'hub', @KeyDetectionType)
 
-
 	-- This following line needs to be modified to replace the datatypes
 	SET @SQL = @OPENQUERY + @SQL + ''') AS OQ
 		OUTER APPLY $(DatabaseName).[dbo].[fn_map_Oracle_to_SQLServer_DataType](OQ.DATA_TYPE, OQ.DATA_LENGTH, OQ.DATA_PRECISION, OQ.DATA_SCALE) AS Map'
 	
-	PRINT @SQL
+--	PRINT @SQL
 
 END
 ELSE 
 BEGIN
 	-- This condition shouldn't be tripped - but who knows.
-	PRINT 'You shouldnt be here.';
+	PRINT 'You shouldn''t be here.';
 	PRINT @SQL
 	PRINT @conn_type
 END
@@ -311,10 +301,10 @@ BEGIN
 		WHERE [column_key] IN (
 				SELECT c.[column_key]
 				FROM [$(ConfigDatabase)].[dbo].[dv_source_table] st 
-				inner join [$(ConfigDatabase)].[dbo].[dv_column] c	on c.[table_key] = st.[source_table_key]
+				INNER JOIN [$(ConfigDatabase)].[dbo].[dv_column] c	ON c.[table_key] = st.[source_table_key]
 				WHERE 1=1
-				and st.source_table_key = @source_table_key
-				and c.column_name = @column_name)
+				AND st.source_table_key = @source_table_key
+				AND c.column_name = @column_name)
 
 	EXECUTE @hub_key_column_key = [$(ConfigDatabase)].[dbo].[dv_hub_key_insert] 
 								 @hub_key					= @hub_key
@@ -326,7 +316,7 @@ BEGIN
 								,@hub_key_Collation_Name	= @Collation_Name
 								,@hub_key_ordinal_position	= @bk_ordinal_position
 								,@release_number			= @release_number
-end
+END
 -- hook the Hub Key up to the Source Column which will populate it:
 
 EXECUTE [$(ConfigDatabase)].[dbo].[dv_hub_column_insert] 
@@ -394,13 +384,13 @@ BEGIN
 	UNION
 	SELECT 'EXECUTE [$(ConfigDatabase)].[dbo].[dv_load_source_table]
 	 @vault_source_unique_name = ''' + @source_table_name + '''
-	,@vault_source_load_type = ''full'''
+	,@vault_source_load_type = ''Full'''
 	UNION
-	SELECT 'select top 1000 * from ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([PSL_Config].[dbo].[fn_get_object_name] (hub_name, 'hub'))
-	from [PSL_Config].[dbo].[dv_hub] where hub_name = @hub_name
+	SELECT 'SELECT TOP 1000 * FROM ' + quotename(hub_database) + '.' + quotename(hub_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name] (hub_name, 'hub'))
+	from [$(ConfigDatabase)].[dbo].[dv_hub] where hub_name = @hub_name
 	UNION
-	SELECT 'select top 1000 * from ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([PSL_Config].[dbo].[fn_get_object_name]	(satellite_name, 'sat'))
-	from [PSL_Config].[dbo].[dv_satellite] where satellite_name =  @source_table_name
+	SELECT 'SELECT TOP 1000 * FROM ' + quotename(satellite_database) + '.' + quotename(satellite_schema) + '.' + quotename([$(ConfigDatabase)].[dbo].[fn_get_object_name]	(satellite_name, 'sat'))
+	from [$(ConfigDatabase)].[dbo].[dv_satellite] where satellite_name =  @source_table_name
 	SELECT @myStatements+=myStatement + char(10) FROM @mytable
 	PRINT @myStatements
 	SELECT @myStatements
@@ -427,8 +417,6 @@ SELECT 'failed'
 ROLLBACK;
 END CATCH;
 END
-
-
 
 
 GO

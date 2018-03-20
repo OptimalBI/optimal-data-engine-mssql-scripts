@@ -1,4 +1,4 @@
-﻿
+﻿ 
 CREATE PROCEDURE [Admin].[ODE_Stop_Running_Schedule]
 (
  @RunKey			            INT 
@@ -11,11 +11,11 @@ BEGIN
 SELECT COUNT(*) 
 FROM [$(ConfigDatabase)].[dv_scheduler].[dv_run]
 WHERE @RunKey = run_key 
-AND [run_status] IN ('Scheduled')
+AND [run_status] IN ('Started', 'Scheduled')
 
 IF @@ROWCOUNT < 1 RAISERROR('Run Key (%i) you have selected is not an active scheduled run',16, 1, @RunKey)
 UPDATE [$(ConfigDatabase)].[dv_scheduler].[dv_run]
 SET run_status = 'Cancelled'
-WHERE run_key = @RunKey
-
+WHERE run_key = @RunKey;
+PRINT 'succeeded';
 END

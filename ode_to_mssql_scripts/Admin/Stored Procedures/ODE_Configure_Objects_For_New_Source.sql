@@ -1,15 +1,21 @@
-﻿CREATE PROCEDURE [Admin].[ODE_Build_Objects_For_New_Source]
+﻿CREATE PROCEDURE [Admin].[ODE_Configure_Objects_For_New_Source]
 
 (
 --********************************************************************************************************************************************************************
  @source_system_name			VARCHAR(128) -- 'TestResults'
 ,@source_database_name			VARCHAR(50)  -- 'TestResults'
-,@source_connection_string		VARCHAR(256) -- 'Data Source=ABCXXXDB01;User ID=User1;Initial Catalog=TestResults;Provider=SQLNCLI11.1;Persist Security Info=True;'
+,@source_connection_string		VARCHAR(256) -- 'Data Source=ABCXXXDB01;User ID=User1;Initial Catalog=TestResults;Provider=SQLNCLI11.1;Persist Security Info=True;Connect Timeout=30;'
 -- Note that Connections created here will NOT be promoted during a release. You will need to create the necessary connections in each environment.
-,@source_connection_password	VARCHAR(128) -- ''
+,@source_connection_password	VARCHAR(128) -- 'qwerty'
 ,@source_database_type			VARCHAR(128) = 'MSSQLServer' -- current available values are MSSQLServer and Oracle
 ,@package_folder				VARCHAR(256) -- Integration Services project folder
-,@release_number				INT			 = 0
+,@SprintDate CHAR(8)				--= '20170116'
+	-- Start Date of the current Sprint in Integer yyyymmdd (this depends on having set up a Sprint Release with the key yyymmdd00
+	-- e.g. EXECUTE [dv_release].[dv_release_master_insert] 2016080100, 'Test Sprint release', 'US001', 'Jira'
+,@ReleaseReference VARCHAR(50)		--= 'HR-304'
+	-- User Story and/or Task numbers for the Satellite which you are building.
+,@ReleaseSource VARCHAR(50)			--= 'Jira'
+	-- system the reference number refers to e.g. Jira, Rally
 --********************************************************************************************************************************************************************
 ) AS
 BEGIN
@@ -20,15 +26,11 @@ SET NOCOUNT ON
 Begin:
 ********************************************/
 -- Defaults:
-DECLARE 
-       @source_connection_name		VARCHAR(50)  = @source_system_name
-	   ,@stage_schema_name          VARCHAR(50)  = 'Stage' --Default
-	   ,@schedule_name              VARCHAR(128) = @source_system_name + '_Incremental' -- Creates new schedule per data source
-
+DECLARE @source_connection_name		VARCHAR(50)  = @source_system_name
+DECLARE @stage_schema_name			VARCHAR(50)  = 'Stage' --Default
 DECLARE @package_project			VARCHAR(256) = 'DV_' + @source_system_name
 DECLARE @stage_database_name		VARCHAR(50)  = 'ODE_' + @source_system_name + '_Stage'
 DECLARE @stage_connection_name      VARCHAR(50)  = @stage_database_name
-DECLARE @schedule_description		VARCHAR(256) = 'Collection of ' + @source_system_name + ' Tables to be Loaded Daily'
 DECLARE @stage_connection_string	VARCHAR(256) = 'Provider=SQLNCLI11;Data Source=' + @@SERVERNAME + ';Initial Catalog=' + @stage_database_name + ';Integrated Security=SSPI;Connect Timeout=30'
 
 PRINT '@source_system_name:         '+ @source_system_name	
@@ -42,13 +44,13 @@ PRINT '@stage_schema_name:          '+ @stage_schema_name
 PRINT '@stage_connection_name:      '+ @stage_connection_name
 PRINT '@stage_connection_string:    '+ @stage_connection_string
 PRINT ''							
-PRINT '@schedule_name:              '+ @schedule_name
-PRINT '@schedule_description:       '+ @schedule_description
+
 --Working Storage
 DECLARE @RC							INT
        ,@ReleaseKey					INT
 	   ,@seqint						INT
-
+	   ,@release_number				INT
+	   ,@Description				VARCHAR(256)
 SET NOCOUNT ON;
 BEGIN TRANSACTION;
 BEGIN TRY
@@ -66,8 +68,23 @@ Validation:
 /********************************************
 Release:
 ********************************************/
-if @release_number > -1 select @ReleaseKey = [release_key] from [$(ConfigDatabase)].[dv_release].[dv_release_master] where [release_number] = @release_number  
-                else set @ReleaseKey = -1
+--'Find the Next Release for the Sprint'
+SELECT TOP 1 @seqint = CAST(RIGHT(CAST([release_number] AS VARCHAR(100)), LEN(CAST([release_number] AS VARCHAR(100))) - 8) AS INT)
+FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
+WHERE LEFT(CAST([release_number] AS VARCHAR(100)), 8) = @sprintdate
+ORDER BY 1 DESC
+IF @@rowcount = 0
+SET @release_number = CAST(@sprintdate + '01' AS INT)
+ELSE
+SET @release_number = CAST(@sprintdate + RIGHT('00' + CAST(@seqint + 1 AS VARCHAR(100)), 2) AS INT)
+SELECT @release_number
+SET @Description = 'Configuring metadata for ' + QUOTENAME(@source_system_name) + ' data source'
+-- Create the Release:
+EXECUTE  @ReleaseKey = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert]  
+@release_number		= @release_number	-- date of the Sprint Start + ad hoc release number
+,@release_description	= @Description		-- what the release is for
+,@reference_number		= @ReleaseReference
+,@reference_source		= @ReleaseSource
 
 /********************************************
  Register the Source System in Config
@@ -96,14 +113,6 @@ EXECUTE [$(ConfigDatabase)].[dbo].[dv_stage_schema_insert]
   ,@is_retired				= 0
   ,@release_number			= @release_number
 
-/********************************************
- Create a Schedule for the new Source System
-********************************************/
-EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_insert] 
-   @schedule_name			= @schedule_name 
-  ,@schedule_description	= @schedule_description
-  ,@schedule_frequency		= 'Daily' --documentary only
-  ,@release_number			= @release_number
 
 /********************************************
  Add a Connections
