@@ -1,5 +1,5 @@
 ﻿
-CREATE PROCEDURE [Admin].[ODE_Get_Metadata_For_Source_Table_Single]
+CREATE PROCEDURE [Admin].[ODE_Configure_Source_Table_Single]
 --
 (
  @release_key					INT			= 0

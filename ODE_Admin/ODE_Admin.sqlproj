@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>ode_to_mssql_scripts</Name>
+    <Name>ODE_Admin</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{515f8719-d524-4dbd-8639-fce70781cf15}</ProjectGuid>
@@ -12,8 +12,8 @@
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
-    <RootNamespace>ode_to_mssql_scripts</RootNamespace>
-    <AssemblyName>ode_to_mssql_scripts</AssemblyName>
+    <RootNamespace>ODE__Admin_Scripts</RootNamespace>
+    <AssemblyName>ODE_Admin_Scripts</AssemblyName>
     <ModelCollation>1033,CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
@@ -39,7 +39,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>C:\GIT\ode_to_mssql_scripts\ode_to_mssql_scripts\ReleaseScript\</OutputPath>
+    <OutputPath>C:\Git\ode_to_mssql_scripts\ODE_Admin\ReleaseScript\</OutputPath>
     <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DebugSymbols>true</DebugSymbols>
@@ -49,6 +49,7 @@
     <DefineTrace>true</DefineTrace>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <SqlTargetName>ODE_Admin_Installation_Script</SqlTargetName>
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
@@ -71,8 +72,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Management\Back_Out_Release.sql" />
-    <Build Include="Admin\Stored Procedures\ODE_Get_Metadata_For_Source_Table_Single.sql" />
-    <Build Include="Admin\Stored Procedures\ODE_Get_Metadata_For_Source_Table_List.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Configure_Source_Table_Single.sql" />
+    <Build Include="Admin\Stored Procedures\ODE_Configure_Source_Table_List.sql" />
     <Build Include="dbo\User Defined Types\dv_column_type.sql" />
     <Build Include="Admin\Stored Procedures\ODE_Cancel_Schedule.sql" />
     <Build Include="Admin\Stored Procedures\ODE_Stop_Running_Schedule.sql" />
@@ -96,7 +97,6 @@
     <Build Include="dbo\Functions\fn_map_Oracle_to_SQLServer_DataType.sql" />
     <Build Include="dbo\Stored Procedures\ODE_populate_source_table_columns.sql" />
     <Build Include="Admin\Stored Procedures\ODE_Get_List_Of_Tables_From_Source.sql" />
-    <Build Include="Management\Query Builder.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="ConfigDatabase">

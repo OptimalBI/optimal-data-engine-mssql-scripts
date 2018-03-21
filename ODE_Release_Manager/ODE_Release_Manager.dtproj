@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <DeploymentModel>Project</DeploymentModel>
-  <ProductVersion>13.0.1601.5</ProductVersion>
+  <ProductVersion>14.0.600.250</ProductVersion>
   <SchemaVersion>9.0.1.0</SchemaVersion>
   <State>$base64$PFNvdXJjZUNvbnRyb2xJbmZvIHhtbG5zOnhzZD0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEiIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiIHhtbG5zOmRkbDI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDAzL2VuZ2luZS8yIiB4bWxuczpkZGwyXzI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDAzL2VuZ2luZS8yLzIiIHhtbG5zOmRkbDEwMF8xMDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDA4L2VuZ2luZS8xMDAvMTAwIiB4bWxuczpkZGwyMDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDEwL2VuZ2luZS8yMDAiIHhtbG5zOmRkbDIwMF8yMDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDEwL2VuZ2luZS8yMDAvMjAwIiB4bWxuczpkZGwzMDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDExL2VuZ2luZS8zMDAiIHhtbG5zOmRkbDMwMF8zMDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDExL2VuZ2luZS8zMDAvMzAwIiB4bWxuczpkZGw0MDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDEyL2VuZ2luZS80MDAiIHhtbG5zOmRkbDQwMF80MDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDEyL2VuZ2luZS80MDAvNDAwIiB4bWxuczpkZGw1MDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDEzL2VuZ2luZS81MDAiIHhtbG5zOmRkbDUwMF81MDA9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vYW5hbHlzaXNzZXJ2aWNlcy8yMDEzL2VuZ2luZS81MDAvNTAwIiB4bWxuczpkd2Q9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vRGF0YVdhcmVob3VzZS9EZXNpZ25lci8xLjAiPg0KICA8RW5hYmxlZD5mYWxzZTwvRW5hYmxlZD4NCiAgPFByb2plY3ROYW1lPjwvUHJvamVjdE5hbWU+DQogIDxBdXhQYXRoPjwvQXV4UGF0aD4NCiAgPExvY2FsUGF0aD48L0xvY2FsUGF0aD4NCiAgPFByb3ZpZGVyPjwvUHJvdmlkZXI+DQo8L1NvdXJjZUNvbnRyb2xJbmZvPg==</State>
   <Database>
@@ -22,11 +22,11 @@
           <SSIS:Property SSIS:Name="VersionComments">
           </SSIS:Property>
           <SSIS:Property SSIS:Name="CreationDate">2016-11-11T13:08:32.4476854+13:00</SSIS:Property>
-          <SSIS:Property SSIS:Name="CreatorName">Giraffe_010\brianb</SSIS:Property>
+          <SSIS:Property SSIS:Name="CreatorName">brianb</SSIS:Property>
           <SSIS:Property SSIS:Name="CreatorComputerName">GIRAFFE_010</SSIS:Property>
           <SSIS:Property SSIS:Name="Description">
           </SSIS:Property>
-          <SSIS:Property SSIS:Name="PasswordVerifier" SSIS:Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAeENzxPK8vkSgtzGMFCd3aAAAAAACAAAAAAADZgAAwAAAABAAAABbqN8YgB2BYSZDc4HjUKB8AAAAAASAAACgAAAAEAAAANfAHObqt/XctR5Yl8MSvPeIAAAAtIEksuACGi+9OcaFoUFOB3BBGCmF9pNFg0lD5uRxz1Co0R2LD2rk9WP6Dz+ggrAZ8iOAE0WKSNBd6r755h6NoCrutHU401H2lG8v++I/pQmPR1tqC40ATaR11uAB/l1x/wbRi/Pvcc0ilP+B0uT/CtHLmU5BCPg/Me1B+RbASkqBxCpxuK3iDhQAAACrxnWr8nAgq5FUpx9ghz3AxwAxWA==</SSIS:Property>
+          <SSIS:Property SSIS:Name="PasswordVerifier" SSIS:Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPCsx3evpM0iPrK1nencybAAAAAACAAAAAAAQZgAAAAEAACAAAACmqGoaZntIyxhwyAPv3esgNPV/poFY8+XFzIz1fXP4xwAAAAAOgAAAAAIAACAAAACJhxhFbxMyTwQ9bpS9Xv8i/DeL8KPZco/qS0IwHDDNCJAAAADro9LYd4wzP9xof3hpMO1LCoTXwGjUvvxvzr0UHabS9Udqy4v76IwXLgK3LXcXf05SuLNxPvnH4TgW3EpHgTfrwlE73Uth/Qjw6A/o1ryaYpwitq1l5Iea8qFRg2re5LdIDQRLeI6JJcXddPlADc5Z6cPE4uWnP1VPwYh59kjPE2CRHyAz/SqbHHmGWpg8T7tAAAAACTjGBTG12tVu/gj9xoM3axOGWPgTeFFKRF/HPpheoV5n4I1+r/ZroQ3NMx2Deujth3MGsmlf1RBZQuZpa1Np0Q==</SSIS:Property>
           <SSIS:Property SSIS:Name="FormatVersion">1</SSIS:Property>
         </SSIS:Properties>
         <SSIS:Packages>
@@ -107,7 +107,7 @@
                 <SSIS:Property SSIS:Name="IncludeInDebugDump">0</SSIS:Property>
                 <SSIS:Property SSIS:Name="Required">0</SSIS:Property>
                 <SSIS:Property SSIS:Name="Sensitive">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="Value">Data Source=DonaldDuck;User ID=ODERelease;Initial Catalog=ODE_config;Provider=SQLNCLI11.1;Persist Security Info=True;Auto Translate=False;</SSIS:Property>
+                <SSIS:Property SSIS:Name="Value">Data Source=DonaldDuck;User ID=ODERelease;Initial Catalog=ODE_Config;Provider=SQLNCLI11.1;Persist Security Info=True;Auto Translate=False;</SSIS:Property>
                 <SSIS:Property SSIS:Name="DataType">18</SSIS:Property>
               </SSIS:Properties>
             </SSIS:Parameter>

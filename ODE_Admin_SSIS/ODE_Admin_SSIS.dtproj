@@ -15,7 +15,7 @@
       <SSIS:Project SSIS:ProtectionLevel="EncryptSensitiveWithUserKey" xmlns:SSIS="www.microsoft.com/SqlServer/SSIS">
         <SSIS:Properties>
           <SSIS:Property SSIS:Name="ID">{5555e495-c985-400a-ba09-4929704a0447}</SSIS:Property>
-          <SSIS:Property SSIS:Name="Name">Admin_SSIS</SSIS:Property>
+          <SSIS:Property SSIS:Name="Name">ODE_Admin_SSIS</SSIS:Property>
           <SSIS:Property SSIS:Name="VersionMajor">1</SSIS:Property>
           <SSIS:Property SSIS:Name="VersionMinor">0</SSIS:Property>
           <SSIS:Property SSIS:Name="VersionBuild">0</SSIS:Property>
@@ -26,7 +26,7 @@
           <SSIS:Property SSIS:Name="CreatorComputerName">PC612933</SSIS:Property>
           <SSIS:Property SSIS:Name="Description">
           </SSIS:Property>
-          <SSIS:Property SSIS:Name="PasswordVerifier" SSIS:Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA17x+9X6+jEeW9Q76xVLbYgAAAAACAAAAAAAQZgAAAAEAACAAAAB2lnHioYt+Q9TRpLfwtJDcJphld6dgdp5EjHjOhPzAzAAAAAAOgAAAAAIAACAAAABIPQp8RAkBmaEp4NOXqBdyrWGCmJ7qBV5VTJaM7oBg15AAAADA4cUliOoRiVgsWHyznihEL2G663Gtk/1iappLgib0R/1tZPmPhyw4pGvGcOBrswDflZ/uT+8nTDsi4PAWuLgYt8QZtA8xlPA/r6mHjjxmQbgUN3/B26wVmPHDyjXZqmREKi/XlACFouj7vNukQBv5YND7KMXeAcDeVQXydNZERgskHoPSZaigXLReEJcrPEhAAAAAS/yvO/U4oMGQcKaxviv6uBnI1cyG3EoKDRT3iihxul3JJrCRD2gunaXExB3iwkGswGFDhteqSxdy5VTkIe/3UQ==</SSIS:Property>
+          <SSIS:Property SSIS:Name="PasswordVerifier" SSIS:Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPCsx3evpM0iPrK1nencybAAAAAACAAAAAAAQZgAAAAEAACAAAAC3O0yQzj8KrDJMDozDrANiR2whZD8BsbgW1VT4er5xiwAAAAAOgAAAAAIAACAAAAAbuILw4vkXtKc/xVv0ZhdNfod1HKCT+iuwtgualcARCZAAAADZ70ervVXkagZmOcO9J1XAm+AvP/lNPPlRIcyTaqqg0GGyNsZbhYDoMBPH5qQAZS6gvp3SUNUivw97+qSttnI9bGSdNBwWMCXx9B80UqidD5aLCGB1i95i+myWyy8KKtPJcy7MRU40lLHcImyABcuc47Mb38fd6Zej0nnSPlEk6hEKaq/sjL//1il2dpF1rRpAAAAAcetIaWk0kl/JsJ4SYH+rEJB+/wmDrnphyMZjQoqtQ0GC3yc4IpzO97UtFxIHy7d/vh9euj7AkreAa8Bj6+6G+A==</SSIS:Property>
           <SSIS:Property SSIS:Name="FormatVersion">1</SSIS:Property>
         </SSIS:Properties>
         <SSIS:Packages>

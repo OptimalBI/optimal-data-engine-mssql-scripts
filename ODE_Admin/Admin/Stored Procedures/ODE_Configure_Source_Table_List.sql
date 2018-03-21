@@ -1,5 +1,5 @@
 ﻿
-CREATE PROCEDURE [Admin].[ODE_Get_Metadata_For_Source_Table_List]
+CREATE PROCEDURE [Admin].[ODE_Configure_Source_Table_List]
 (
  @KeyDetectionType				VARCHAR(20)			= 'Primary' --Valid values are Primary, Unique, None
 ,@SourceSystemName              VARCHAR(128) 
@@ -60,20 +60,28 @@ EXECUTE  @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_inse
 /********************************************
 Scheduler:
 ********************************************/
+
 DECLARE
 	 @schedule_full_name			VARCHAR(128) = @SourceSystemName + '_Full' --Sales_Full
 	,@schedule_delta_name			VARCHAR(128) = @SourceSystemName + '_Incremental' --Sales_Incremental
 	,@schedule_full_desc			VARCHAR(128) = 'Full load of tables from ' + @SourceSystemName
 	,@schedule_delta_desc			VARCHAR(128) = 'Incremental load of tables from ' + @SourceSystemName
 
--- Create full schedule
+
+SELECT 1 FROM [$(ConfigDatabase)].[dv_scheduler].[dv_schedule]
+WHERE schedule_name = @schedule_full_name
+IF @@rowcount = 0
+-- Create full schedule if necessary
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_insert] 
 	 @schedule_name				= @schedule_full_name
 	,@schedule_description		= @schedule_full_desc
 	,@schedule_frequency		= 'Manually' --documentary only
 	,@release_number			= @release_number
 
--- Create incremental schedule
+SELECT 1 FROM [$(ConfigDatabase)].[dv_scheduler].[dv_schedule]
+WHERE schedule_name = @schedule_delta_name
+IF @@rowcount = 0
+-- Create incremental schedule if necessary
 EXECUTE [$(ConfigDatabase)].[dv_scheduler].[dv_schedule_insert] 
 	 @schedule_name				= @schedule_delta_name
 	,@schedule_description		= @schedule_delta_desc
@@ -94,7 +102,7 @@ ORDER BY ordinal_position
 	WHILE @@FETCH_STATUS = 0   
 	BEGIN 
 
-		EXECUTE [Admin].[ODE_Get_Metadata_For_Source_Table_Single]
+		EXECUTE [Admin].[ODE_Configure_Source_Table_Single]
 				 @release_key			= @release_key
 				,@KeyDetectionType		= @KeyDetectionType
 				,@SourceSystemName		= @SourceSystemName
