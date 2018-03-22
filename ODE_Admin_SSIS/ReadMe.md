@@ -2,13 +2,13 @@
 
 ODE SSIS Admin project is a set of SSIS packages for perform administration tasks for ODE instance. 
 At the moment project consists of two packages.
-* Create_access_functions contains a logic to create or rebuild all the access functions for every satellite in the config. Package uses an Admin procedure for rebuilding table functions from the core ODE scripts project and require them to be installed on server. Use this SSIS package for the bulk rebuild during the development. You also can add it to the SQL Agent job to be excuted on particular schedule to reflect all the changes made to the Vault. Rad more about access functions: http://ode.ninja/satellite-change-data-capture-functions/
-* Restart_Schedule_single is an easy way to restart the failed load after it has been fixed. Once installed on server, you can execute the package from the Integration services catalog with the parameter of the failed load. Read more about task scheduling here: http://ode.ninja/task-scheduling/
-
+* Create_access_functions contains a logic to create or rebuild all the access functions for every satellite in the config. Package uses an Admin procedure for rebuilding table functions from the core ODE scripts project and require them to be installed on server. Use this SSIS package for the bulk rebuild during the development. You also can add it to the SQL Agent job to be executed on particular schedule to reflect all the changes made to the Vault. Rad more about access functions: https://github.com/OptimalBI/optimal-data-engine-mssql/wiki/Satellite-Change-Data-Capture-Functions
+* Restart_Schedule_single is an easy way to restart the failed load after it has been fixed. Once installed on server, you can execute the package from the Integration services catalog with the parameter of the failed load. Read more about task scheduling here: https://github.com/OptimalBI/optimal-data-engine-mssql/wiki/Task-Scheduling
 ## Installation ##
-* Open the project in Visual Studio 2015. 
+Pre-requisite: ODE_Admin database should be installed on the server. This project is also a part of ODE_Admin solution.
+* Open the project in Visual Studio 2015. SQL Server Data Tools for Integration Services should be installed on your computer.
 * In the Solution Explorer edit project's connections under the project's Connection Managers folder. Connections should both point to the server where ODE is installed and where you are planning to deploy the project. Connection ODE_Config should point to your instance of ODE Config database. Connection ODE_Admin should point to your instance of ODE Admin database.
-* Right-click on the project in the Solutio Explorer, choose Deploy. Provide a server name and a folder in the Integration Services catalog where the project will be installed.
+* Right-click on the project in the Solution Explorer, choose Deploy. Provide a server name and a folder in the Integration Services catalog where the project will be installed.
 
 ## Notes ##
 * SSIS package has been implemented in Visual Studio 2015 for the target SQL Server 2016.

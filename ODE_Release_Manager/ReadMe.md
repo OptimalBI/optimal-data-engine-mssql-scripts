@@ -2,24 +2,32 @@
 
 ODE Release Manager enables ODE Configuration code promotion without writing release script into the file system.
 Multiple parameters help with the release customisation. Release manager could create a release record, build or re-build configuration release script, move release script into the target release environment and apply it to the target environment. Although new configuration is applied to the target environment, it is not applied to the physical Data Vault automatically. Run the following script to build new DV objects or re-build existing ones if configuration has been changed. Note that re-building the DV object means dropping and re-creating the table, all the data will be dropped.
-http://ode.ninja/how-to-create-missing-vault-objects/
+https://github.com/OptimalBI/optimal-data-engine-mssql/wiki/How-to-Create-Missing-Vault-Objects
 
 
 ODE release mechanism is described here:
-http://ode.ninja/configuration-release-management/
+https://github.com/OptimalBI/optimal-data-engine-mssql/wiki/Configuration-Release-Management
 
 Note that this package releases ODE configuration code only. Staging code is not promoted by this SSIS package and should be released separately.
+
+## Current functionality: ##
+Details of the current functionality can be found here https://github.com/OptimalBI/optimal-data-engine-mssql/wiki/Release-Config-with-SSIS-package
+
+## Notes ##
+* SSIS package has been implemented in Visual Studio 2015.
 
 ## Installation ##
 Deploy SSIS project to the release target environment. E.g. if you are going to release ODE configuration from DEV to TEST server, deploy release project into the TEST SQL Server Intergation Services catalog. Also installation require SQL server login "ODERelease" to be created on the source environment. This login should have read and write access to the source ODE Config, because the release SSIS package could build (compile) release script and write it into the table.
 
-You can provide all the parameters manually when executing the package. However, we recommend using SSIS project environment for the best experience. Set up an environment for Full release and an environment for Partial release in the SQL Server Integration Services catalog. To achieve that, create an environment and add the following parameters in there.
+SSIS Project could be deployed via Visual Studio. You need to have Visual Studio 2015 with Data Tools extension for Integration Services installed on your computer.
+* Open the solution in Visual Studio
+* Right click on the project in Solution Explorer
+* Select "Deploy"
+* Provide server name where the project will be deployed and SSIS catalog folder name. If it is the first SSIS project on this server, it will prompt to initialise SSIS catalog first. It could be done from SQL Server Management studio. Right click on Integration Services Catalogs and choose "Create Catalog".
+* Deploy SSIS package
 
-## Current functionality: ##
-Details of the current functionality can be found here http://ode.ninja/release-config-with-ssis-package/
-
-## Notes ##
-* SSIS package has been implemented in Visual Studio 2015.
+You can provide all the parameters manually when executing the package. However, we recommend using SSIS project environment for the best experience. Set up an environment for Full release and an environment for Partial release in the SQL Server Integration Services catalog. In the SQL Server Management Studio navigate to the Integration Services Catalog on the server where the release SSIS package is installed. The folder contains two subfolders, Projects and Environments. Right click on Environments and select Create Environment.
+Environment parameters are listed below.
 
 ##Full release environment##
 

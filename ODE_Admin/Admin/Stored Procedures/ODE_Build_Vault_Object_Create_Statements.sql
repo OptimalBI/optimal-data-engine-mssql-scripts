@@ -1,6 +1,4 @@
 ﻿
-
-
 CREATE PROCEDURE [Admin].[ODE_Build_Vault_Object_Create_Statements]
 --
 (
@@ -77,16 +75,16 @@ SET @ParmDefinition = N'@SQLOutVal NVARCHAR(1000) OUTPUT';
 DECLARE hub_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then 
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([hub_name], 'Hub'
 )+''')' +
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''Y''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''Y''''''
 where exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([hub_name], 'Hub'
 )+''')' 
 else 
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_hub_table] '''''+[hub_database]+''''','''''+[hub_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([hub_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([hub_name], 'Hub'
 )+''')'
@@ -116,16 +114,16 @@ PRINT '-------------------';
 DECLARE link_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then 
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([link_name], 'Lnk'
 )+''')' +
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''Y''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''Y''''''
 where  exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([link_name], 'Lnk'
 )+''')'
 else
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_link_table] '''''+[link_database]+''''','''''+[link_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([link_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([link_name], 'Lnk'
 )+''')'
@@ -155,16 +153,16 @@ PRINT '------------------';
 DECLARE sat_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([satellite_name], 'Sat'
 )+''')'+
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''Y''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''Y''''''
 where exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([satellite_name], 'Sat'
 )+''')'
 else  
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_sat_table] '''''+[satellite_database]+''''','''''+[satellite_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([satellite_database])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([satellite_name], 'Sat'
 )+''')'
@@ -195,16 +193,16 @@ PRINT '------------------';
 DECLARE stage_cursor CURSOR
 FOR SELECT 
 case when @Rebuild = 'Yes' then
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([stage_table_name], 'Stg'
 )+''')'+
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''Y''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''Y''''''
 where exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([stage_table_name], 'Stg'
 )+''')'
 else  
-'select @SQLOutVal = ''EXECUTE [ODE_Config].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''N''''''
+'select @SQLOutVal = ''EXECUTE [$(ConfigDatabase)].[dbo].[dv_create_stage_table] '''''+[stage_table_name]+''''',''''N''''''
 where not exists (select 1 from '+QUOTENAME([stage_database_name])+'.[information_schema].[tables] where table_name = ''' + [$(ConfigDatabase)].[dbo].[fn_get_object_name]
 ([stage_table_name], 'Stg'
 )+''')'

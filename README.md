@@ -28,17 +28,20 @@ The Project contains a number of discrete scripts and SSIS packages, which you c
 
 ### Installation ###
 
-Admin database with "helper" stored procedures scripted installation:
+ODE Admin database with "helper" stored procedures scripted installation:
 * Open SQL Server Management studio and load *ode_to_mssql_scripts_Create.sql* from the extracted zip file. You will find it in the *ReleaseScript* folder.
 * Within SQL Server Management Studio > Click Query Menu > SQLCMD Mode 
-* Within the script optionally change the ConfigDatabase to your ODE_Config database name, DatabaseName and DefaultFilePrefix to the preferred ODE scripts database name; default is *ode_to_mssql_scripts*. *ODE_Admin* is recommended. 
+* Within the script optionally change the ConfigDatabase to your ODE_Config database name, DatabaseName and DefaultFilePrefix to the preferred ODE scripts database name; default is *ODE_Admin*. 
 * Click Execute from the toolbar. This should run successfully with a result of 'Update complete' on the Message panel
 
-Admin database installation via Visual Studio:
+ODE Admin database installation via Visual Studio:
 * Open the solution in Visual Studio 2015
 * Right-click on the *ode_to_mssql_scripts* project in the Solution Explorer, choose "Publish"
 * Provide a server connection, desired database name and ODE_Config database name as a parameter.
 * Click Publish, this will create a database with "helper" scripts
+
+ODE Admin SSIS project:
+* Refer to the ODE Admin SSIS project ReadMe file
 
 Release Management SSIS Project:
 * Refer to the Release Management project ReadMe file
@@ -50,8 +53,7 @@ ODE_Stage and ODE_Vault projects:
 * Don't require installation as such. They could be used as a template for the ODE Data Vault implementation
 
 ## Current functionality: ##
-Details of the current ODE functionality can be found here http://www.ode.ninja/category/features/
-These scripts are linked on a number of pages in http://www.ode.ninja/ , where there usage is dicussed in more detail.
+Details of the current ODE functionality can be found here https://github.com/OptimalBI/optimal-data-engine-mssql/wiki . These scripts are improving interaction with ODE when developing a Data Vault; generally referred as "helper scripts" or admin scripts.
 
 ## Notes ##
 * Untested on SQL Server editions prior to 2014. Installation script is compiled for SQL Server 2016.
@@ -65,6 +67,8 @@ Visit http://www.ode.ninja/ - this is where we keep our guides and share our kno
 
 ## Change log: ##
 ```
+Build 005.002.002 on 20180321
+	* Added scripts for automated PSA configuration
 Build 005.002.001 on 20180124
 	* Added ODE Calendar
 Build 005.001.001 on 20170911
