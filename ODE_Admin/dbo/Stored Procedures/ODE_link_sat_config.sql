@@ -92,13 +92,13 @@ INSERT @ExcludeColumns  VALUES ('dv_stage_datetime')
 Begin:
 ********************************************/
 
-select 1 from [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
-inner join [$(ConfigDatabase)].[dbo].[dv_stage_schema]ss on ss.[stage_database_key] = sd.[stage_database_key]
-where sd.[stage_database_name] = @StageDatabase
-and ss.[stage_schema_name] = @StageSchema
-if @@ROWCOUNT <> 1 raiserror( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
+SELECT 1 FROM [$(ConfigDatabase)].[dbo].[dv_stage_database] sd
+INNER JOIN [$(ConfigDatabase)].[dbo].[dv_stage_schema] ss ON ss.[stage_database_key] = sd.[stage_database_key]
+WHERE sd.[stage_database_name] = @StageDatabase
+AND ss.[stage_schema_name] = @StageSchema
+IF @@ROWCOUNT <> 1 RAISERROR( 'Stage Database %s or Stage Schema %s does not exist', 16, 1, @StageDatabase, @StageSchema)
 
-select @LinkName = case when isnull(@LinkName, '') = '' then @StageTable else @LinkName end
+SELECT @LinkName = CASE WHEN ISNULL(@LinkName, '') = '' THEN @StageTable ELSE @LinkName END
 --Working Storage
 DECLARE @seqint					INT
 ,@release_number				INT
@@ -137,35 +137,35 @@ DECLARE @seqint					INT
 ,@ServerName					SYSNAME
 ,@source_table_key				INT
 ,@source_version_key			INT
-,@StageTableKey					varchar(128)
-,@source_procedure_name         varchar(128) = case when @StageSourceType = 'BespokeProc' then 'usp_' + @StageTable 
-												else NULL end
-,@pass_load_type_to_proc		BIT = case when @StageLoadType = 'BespokeProc' then @StagePassLoadTypeToProc else 0 end
+,@StageTableKey					VARCHAR(128)
+,@source_procedure_name         VARCHAR(128) = CASE WHEN @StageSourceType = 'BespokeProc' THEN 'usp_' + @StageTable 
+												ELSE NULL END
+,@pass_load_type_to_proc		BIT = CASE WHEN @StageLoadType = 'BespokeProc' THEN @StagePassLoadTypeToProc ELSE 0 END
 --
 --SET @uspName = 'usp_' + @SourceTable
 BEGIN TRANSACTION;
 BEGIN TRY
-select @ServerName = @@servername
+SELECT @ServerName = @@SERVERNAME
 -- Uncomment this to ensure that this build only happens in the correct place.
 --if @ServerName <> @DevServerName
 --   begin
 --   raiserror( 'This Process may only be run in the Development environment!!', 16, 1)
 --   end
-if @StageLoadType not in ('Full', 'Delta') raiserror( '%s is not a valid Load Type', 16, 1, @StageLoadType)
+IF @StageLoadType NOT IN ('Full', 'Delta') RAISERROR( '%s is not a valid Load Type', 16, 1, @StageLoadType)
 /********************************************
 Release:
 ********************************************/
 --Find the Next Release for the Sprint
-SELECT TOP 1 @seqint = cast(right(cast([release_number] AS VARCHAR(100)), len(cast([release_number] AS VARCHAR(100))) - 8) AS INT)
+SELECT TOP 1 @seqint = CAST(RIGHT(CAST([release_number] AS VARCHAR(100)), LEN(CAST([release_number] AS VARCHAR(100))) - 8) AS INT)
 FROM [$(ConfigDatabase)].[dv_release].[dv_release_master]
-WHERE left(cast([release_number] AS VARCHAR(100)), 8) = @sprintdate
+WHERE LEFT(CAST([release_number] AS VARCHAR(100)), 8) = @sprintdate
 ORDER BY 1 DESC
-IF @@rowcount = 0
-SET @release_number = cast(@sprintdate + '01' AS INT)
+IF @@ROWCOUNT = 0
+SET @release_number = CAST(@sprintdate + '01' AS INT)
 ELSE
-SET @release_number = cast(@sprintdate + right('00' + cast(@seqint + 1 AS VARCHAR(100)), 2) AS INT)
+SET @release_number = CAST(@sprintdate + RIGHT('00' + CAST(@seqint + 1 AS VARCHAR(100)), 2) AS INT)
 SELECT @release_number
-SET @Description = 'Load Stage Table: ' + quotename(@StageTable) + ' into ' + quotename(@VaultName)
+SET @Description = 'Load Stage Table: ' + QUOTENAME(@StageTable) + ' into ' + QUOTENAME(@VaultName)
 -- Create the Release:
 EXECUTE @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_insert] 
 			 @release_number = @release_number -- date of the Sprint Start + ad hoc release number
@@ -177,10 +177,10 @@ EXECUTE @release_key = [$(ConfigDatabase)].[dv_release].[dv_release_master_inser
 Link:
 ********************************************/
 -- Configure the Link:
-if @SatelliteOnly = 'N'
-begin
-SELECT @abbn = [$(ConfigDatabase)].[dbo].[fn_get_next_abbreviation]()
-EXECUTE @link_key = [$(ConfigDatabase)].[dbo].[dv_link_insert] 
+IF @SatelliteOnly = 'N'
+BEGIN
+	SELECT @abbn = [$(ConfigDatabase)].[dbo].[fn_get_next_abbreviation]()
+	EXECUTE @link_key = [$(ConfigDatabase)].[dbo].[dv_link_insert] 
 			 @link_name = @LinkName
 			,@link_abbreviation = @abbn
 			,@link_schema = @link_schema
@@ -188,17 +188,16 @@ EXECUTE @link_key = [$(ConfigDatabase)].[dbo].[dv_link_insert]
 			,@is_compressed = @link_is_compressed
 			,@is_retired = 0
 			,@release_number = @release_number
-end
-else
-begin
-select @link_key = [link_key]
-	  ,@link_database = [link_database]
-from [$(ConfigDatabase)].[dbo].[dv_link] where [link_name] = @LinkName
-if @link_database <> @VaultName
-begin
-raiserror( 'The Link and Satellite have to exist in the same database', 16, 1)
-end
-end
+END
+ELSE
+BEGIN
+	SELECT @link_key = [link_key]
+		,@link_database = [link_database]
+	FROM [$(ConfigDatabase)].[dbo].[dv_link] 
+	WHERE [link_name] = @LinkName
+	IF @link_database <> @VaultName
+		RAISERROR( 'The Link and Satellite have to exist in the same database', 16, 1)
+END
 /********************************************
 Satellite:
 ********************************************/
@@ -236,7 +235,10 @@ EXECUTE [$(ConfigDatabase)].[dv_config].[dv_populate_source_table_columns]
   ,@vault_rerun_column_insert	= 0
   ,@is_columnstore				= @stage_is_columnstore
   ,@is_compressed				= @stage_is_compressed
-select @source_table_key = source_table_key from [$(ConfigDatabase)].[dbo].[dv_source_table] where [source_unique_name] = @StageTable
+
+SELECT @source_table_key = source_table_key 
+FROM [$(ConfigDatabase)].[dbo].[dv_source_table] 
+WHERE [source_unique_name] = @StageTable
 
 -- Add a Current Source Version with a "Version" of 1 
 EXECUTE @source_version_key = [$(ConfigDatabase)].[dbo].[dv_source_version_insert] 
@@ -315,17 +317,17 @@ SELECT 'Hook up each of the Hub Keys:'
 
 DECLARE curLinkHub CURSOR FOR  
 SELECT  hub_name
-       ,link_key_name = max(link_key_name) over (partition by link_key_name, hub_name)
+       ,link_key_name = MAX(link_key_name) OVER (PARTITION BY link_key_name, hub_name)
 	   ,hub_column_name
 	   ,column_name
 	FROM @Hub_Key_List
-	order by OrdinalPosition
+	ORDER BY OrdinalPosition
 OPEN curLinkHub   
 FETCH NEXT FROM curLinkHub INTO  @curLinkHub_hub_name	   
 								,@curLinkHub_link_key_name
 								,@curLinkHub_hub_column_name
 								,@curLinkHub_column_name
-select  @curLinkHub_hub_name	   
+SELECT  @curLinkHub_hub_name	   
 	   ,@curLinkHub_link_key_name
 	   ,@curLinkHub_hub_column_name
 	   ,@curLinkHub_column_name
@@ -335,50 +337,51 @@ select  @curLinkHub_hub_name
 -- Each Hub == Each Link Key. First loop through the Hubs:
 WHILE @@FETCH_STATUS = 0   
 BEGIN   
-      set @thisHub = @curLinkHub_hub_name
-	  set @thisLink_Key = @curLinkHub_link_key_name
-	  if @SatelliteOnly = 'N'
-			begin
+      SET @thisHub = @curLinkHub_hub_name
+	  SET @thisLink_Key = @curLinkHub_link_key_name
+	  IF @SatelliteOnly = 'N'
+			BEGIN
 			EXECUTE  @link_key_column_key = [$(ConfigDatabase)].[dbo].[dv_link_key_insert] 
 											 @link_key				= @link_key
 											,@link_key_column_name  = @curLinkHub_link_key_name
 											,@release_number		= @release_number
-				end
-			else
-				begin
-					select @link_key_column_key = lkc.link_key_column_key
-					from [$(ConfigDatabase)].[dbo].[dv_hub_column] hc
-					inner join [$(ConfigDatabase)].[dbo].[dv_link_key_column] lkc	on lkc.link_key_column_key = hc.link_key_column_key
-					inner join [$(ConfigDatabase)].[dbo].[dv_hub_key_column] hkc		on hkc.hub_key_column_key = hc.hub_key_column_key
-					inner join [$(ConfigDatabase)].[dbo].[dv_hub] h					on h.hub_key = hkc.hub_key
-					where h.hub_name = @curLinkHub_hub_name
-					and isnull(lkc.link_key_column_name, h.hub_name) = @curLinkHub_column_name
-				end
+				END
+			ELSE
+				BEGIN
+					SELECT @link_key_column_key = lkc.link_key_column_key
+					FROM [$(ConfigDatabase)].[dbo].[dv_hub_column] hc
+					INNER JOIN [$(ConfigDatabase)].[dbo].[dv_link_key_column] lkc	ON lkc.link_key_column_key = hc.link_key_column_key
+					INNER JOIN [$(ConfigDatabase)].[dbo].[dv_hub_key_column] hkc	ON hkc.hub_key_column_key = hc.hub_key_column_key
+					INNER JOIN [$(ConfigDatabase)].[dbo].[dv_hub] h					ON h.hub_key = hkc.hub_key
+					WHERE h.hub_name = @curLinkHub_hub_name
+					AND isnull(lkc.link_key_column_name, h.hub_name) = @curLinkHub_column_name
+				END
 	  -- Now loop through the Columns for the Hub (to deal with Multi Column Hub Keys).
 	  WHILE @thisHub = @curLinkHub_hub_name
-	    and @thisLink_Key = @curLinkHub_link_key_name
-	    and @@FETCH_STATUS = 0 
+	    AND @thisLink_Key = @curLinkHub_link_key_name
+	    AND @@FETCH_STATUS = 0 
 	  BEGIN	
-	        select 'bb', @StageTable, @curLinkHub_column_name, * from [$(ConfigDatabase)].[dbo].[dv_column] c
-			inner join [$(ConfigDatabase)].[dbo].[dv_source_table] st  on st.source_table_key  = c.table_key
-			where 1=1
+	        SELECT 'bb', @StageTable, @curLinkHub_column_name, * 
+			FROM [$(ConfigDatabase)].[dbo].[dv_column] c
+			INNER JOIN [$(ConfigDatabase)].[dbo].[dv_source_table] st  ON st.source_table_key  = c.table_key
+			WHERE 1=1
 			--and st.source_unique_name = @StageTable
-			and c.column_name = @curLinkHub_column_name
+			AND c.column_name = @curLinkHub_column_name
 
-	  		select @hub_source_column_key = c.column_key
-			from [$(ConfigDatabase)].[dbo].[dv_column] c
-			inner join [$(ConfigDatabase)].[dbo].[dv_source_table] st  on st.source_table_key  = c.table_key
-			where st.source_unique_name = @StageTable
-			and c.column_name = @curLinkHub_column_name
+	  		SELECT @hub_source_column_key = c.column_key
+			FROM [$(ConfigDatabase)].[dbo].[dv_column] c
+			INNER JOIN [$(ConfigDatabase)].[dbo].[dv_source_table] st  ON st.source_table_key  = c.table_key
+			WHERE st.source_unique_name = @StageTable
+			AND c.column_name = @curLinkHub_column_name
 
-			select @hub_key_column_key	= hkc.hub_key_column_key
+			SELECT @hub_key_column_key	= hkc.hub_key_column_key
 				  ,@hub_key				= h.hub_key
-			from [$(ConfigDatabase)].[dbo].[dv_hub] h
-			inner join [$(ConfigDatabase)].[dbo].[dv_hub_key_column] hkc on hkc.[hub_key] = h.[hub_key]
-			where 1=1
-			  and h.hub_name = @curLinkHub_hub_name
-			  and hkc.hub_key_column_name = @curLinkHub_hub_column_name
-select  hub_key_column_key	= @hub_key_column_key
+			FROM [$(ConfigDatabase)].[dbo].[dv_hub] h
+			INNER JOIN [$(ConfigDatabase)].[dbo].[dv_hub_key_column] hkc ON hkc.[hub_key] = h.[hub_key]
+			WHERE 1=1
+			  AND h.hub_name = @curLinkHub_hub_name
+			  AND hkc.hub_key_column_name = @curLinkHub_hub_column_name
+SELECT  hub_key_column_key	= @hub_key_column_key
 	   ,link_key_column_key   = @link_key_column_key
 	   ,column_key			= @hub_source_column_key
 	   ,release_number		= @release_number
@@ -403,26 +406,26 @@ DEALLOCATE curLinkHub
 SELECT 'Remove the Columns in the Exclude List from the Satellite:'
 
  SELECT @StageTableKey = REPLACE(REPLACE(column_name, '[', ''), ']','') FROM [$(ConfigDatabase)].[dbo].[fn_get_key_definition] (@StageTable,'stg')
- insert into @ExcludeColumns values (@StageTableKey)
+ INSERT INTO @ExcludeColumns VALUES (@StageTableKey)
 
 
-update [$(ConfigDatabase)].[dbo].[dv_column]
-set [satellite_col_key] = NULL
-where [column_name] IN (
+UPDATE [$(ConfigDatabase)].[dbo].[dv_column]
+SET [satellite_col_key] = NULL
+WHERE [column_name] IN (
 SELECT *
 FROM @ExcludeColumns)
-and [column_key] in(select c.column_key from [$(ConfigDatabase)].[dbo].[dv_column] c 
-                    inner join [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc on sc.[satellite_col_key] = c.[satellite_col_key]
-					where sc.[satellite_key] = @satellite_key)
+AND [column_key] IN (SELECT c.column_key FROM [$(ConfigDatabase)].[dbo].[dv_column] c 
+                    INNER JOIN [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc ON sc.[satellite_col_key] = c.[satellite_col_key]
+					WHERE sc.[satellite_key] = @satellite_key)
 DELETE
 FROM [$(ConfigDatabase)].[dbo].[dv_satellite_column]
 WHERE [satellite_col_key] IN (
-	select sc.[satellite_col_key]
-	from [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc
-	left join [$(ConfigDatabase)].[dbo].[dv_column] c
-	on sc.[satellite_col_key] = c.[satellite_col_key]
-	where c.[satellite_col_key] is null
-	and sc.[satellite_key] = @satellite_key)
+	SELECT sc.[satellite_col_key]
+	FROM [$(ConfigDatabase)].[dbo].[dv_satellite_column] sc
+	LEFT JOIN [$(ConfigDatabase)].[dbo].[dv_column] c
+	ON sc.[satellite_col_key] = c.[satellite_col_key]
+	WHERE c.[satellite_col_key] is null
+	AND sc.[satellite_key] = @satellite_key)
 
 -- hook the Hub Key up to the Source Column which will populate it:
 --EXECUTE [dbo].[dv_hub_column_insert] @hub_key_column_key = @hub_key_column_key
